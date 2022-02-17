@@ -4,6 +4,10 @@
 #include <sys/timeb.h>
 #include <stdlib.h>
 
+#if defined(__APPLE__) && (defined(__arm64__) || defined(__ARM_NEON__))
+#include "utest.h"
+#endif
+
 #ifdef _WIN32
 #include <IO.H>
 #endif
@@ -27,6 +31,7 @@
 
 #ifndef _WIN32
 #if defined(__APPLE__)
+#include <unistd.h>
 #define _lseeki64 lseek
 #else
 #define _lseeki64 lseek64
@@ -105,11 +110,11 @@ int ParseRefContent(cfg_param_t *input, signed char **buf)
     ref_man *tmp;
     int i = 1;
     int j = 0;
-	signed char *token;
-	signed char **p = buf;
-	signed char *tmp_str = ":";
-	signed char str[64];
-	signed char headstr[10] = { 'F', 'r', 'a', 'm', 'e', '\0', '\0', '\0', '\0', '\0' };
+    signed char *token;
+    signed char **p = buf;
+    signed char *tmp_str = ":";
+    signed char str[64];
+    signed char headstr[10] = { 'F', 'r', 'a', 'm', 'e', '\0', '\0', '\0', '\0', '\0' };
 
     // Fix by Sunil for RD5.0 test in Linux (2013.11.06)
     sprintf(str, "%d", i);
@@ -196,13 +201,13 @@ static int ParameterNameToMapIndex(const Mapping *map_tab, signed char *s)
 
 void ParseContent(cfg_param_t *input, signed char *buf, int bufsize)
 {
-	signed char *items[MAX_ITEMS_TO_PARSE];
+    signed char *items[MAX_ITEMS_TO_PARSE];
     int MapIdx;
     int item = 0;
     int InString = 0;
     int InItem = 0;
-	signed char *p = buf;
-	signed char *bufend = &buf[bufsize];
+    signed char *p = buf;
+    signed char *bufend = &buf[bufsize];
     int IntContent;
     int i;
 
@@ -296,7 +301,7 @@ void ParseContent(cfg_param_t *input, signed char *buf, int bufsize)
             printf(".");
             break;
         case 1:
-			strcpy((signed char *)input + tab_cfg_map[MapIdx].offset, items[i + 2]);
+            strcpy((signed char *)input + tab_cfg_map[MapIdx].offset, items[i + 2]);
             printf(".");
             break;
         default:
@@ -309,7 +314,7 @@ signed char *GetConfigFileContent(signed char *Filename)
 {
     size_t FileSize;
     FILE *f;
-	signed char *buf;
+    signed char *buf;
 
     if (NULL == (f = fopen(Filename, "r"))) {
         printf("Cannot open configuration file %s.\n", Filename);
@@ -348,7 +353,7 @@ signed char *GetConfigFileContent(signed char *Filename)
 
 void Configure(cfg_param_t *input, int ac, signed char *av[])
 {
-	signed char *content;
+    signed char *content;
     int CLcount, NumberParams;
     size_t ContentLen;
 
@@ -386,8 +391,8 @@ void Configure(cfg_param_t *input, int ac, signed char *av[])
 
                 // concatenate all parameters itendified before
                 while (CLcount < NumberParams) {
-					signed char *source = &av[CLcount][0];
-					signed char *destin = &content[strlen(content)];
+                    signed char *source = &av[CLcount][0];
+                    signed char *destin = &content[strlen(content)];
 
                     while (*source != '\0') {
                         if (*source == '=') { // The Parser expects whitespace before and after '='
@@ -503,7 +508,7 @@ void write_frame_10bit(int fd, image_t *out_img, int img_width, int img_height)
 void report(cfg_param_t *input, int running_time)
 {
     double bitrate;
-    double frame_rate = input->frame_rate; 
+    double frame_rate = input->frame_rate;
     FILE* fp;
 
     printf("\n");
@@ -827,9 +832,9 @@ static long long frm_num = 0;
 void Report_frame(int frm_type, long long idx, int bits, double qp, double snr_y, double snr_u, double snr_v, int tmp_time, signed char* ext_info)
 {
 #if !TEST_SPEED
-	signed char *type;
+    signed char *type;
 
-	static signed char frm_type_name[][8] = { " I", " P", " B", " F", " S", " G", "GB", "ER" };
+    static signed char frm_type_name[][8] = { " I", " P", " B", " F", " S", " G", "GB", "ER" };
 
     switch (frm_type) {
     case I_FRM:
@@ -925,7 +930,11 @@ static void uavs3e_set_default_param(cfg_param_t *cfg)
     memcpy(&cfg->seq_ref_cfg, &RA_RPS, sizeof(RA_RPS));
 }
 
-int main(int argc, char **argv)
+#if defined(__APPLE__) && (defined(__arm64__) || defined(__ARM_NEON__))
+int uavs3e_code_rt(int argc, const char **argv)
+#else
+int main(int argc, const char **argv)
+#endif
 {
     int fd_in = 0;
     long long check_time;
