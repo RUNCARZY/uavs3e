@@ -401,7 +401,7 @@ void* avs3_lib_create(cfg_param_t *input_init, strm_out_t strm_callbak, rec_out_
             }
         #endif
     #else
-        #if defined(__arm64__)
+        #if defined(__arm64__)  || defined(__armv8)
             com_funs_init_arm64();
         #else
             com_funs_init_intrinsic_functions_10bit();
@@ -427,15 +427,14 @@ void* avs3_lib_create(cfg_param_t *input_init, strm_out_t strm_callbak, rec_out_
             }
         #endif
     #else
-        #if defined(__arm64__)
+        #if defined(__arm64__) || defined(__armv8)
             com_funs_init_arm64();
         #else
-            com_funs_init_intrinsic_functions_10bit();
-            
-            if (simd_avx_level(NULL) >= 2) {
-                com_funs_init_intrinsic_functions_avx2_10bit();
-                com_funs_init_intrinsic_functions_avx512_10bit();
-            }
+        com_funs_init_intrinsic_functions();
+
+        if (simd_avx_level(NULL) >= 2) {
+            com_funs_init_intrinsic_functions_avx2();
+        }
         #endif
     #endif
 #endif

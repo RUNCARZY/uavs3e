@@ -6,7 +6,7 @@
 #ifndef __ARM64_H__
 #define __ARM64_H__
 
-#include "../uAVS3lib/common.h"
+#include "../common.h"
 i32u_t xGetSAD8_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);
 i32u_t xGetSAD16_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);
 i32u_t xGetSAD32_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);

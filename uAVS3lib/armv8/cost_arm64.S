@@ -1,6 +1,7 @@
 #include "def_arm64.S"
 
 #if defined(__arm64__)
+
 #if !COMPILE_10BIT
 
 //void xGetSAD8_arm64(pel *p_org, int i_org, pel *pred, int i_pred, int height, int skip_lines)
@@ -324,8 +325,13 @@ function xGetSAD8_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
     
     mov x10, #1
     lsl x10, x10, x9       //1 << skip_lines
@@ -387,8 +393,13 @@ function xGetSAD16_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
     
     mov x10, #1
     lsl x10, x10, x9       //1 << skip_lines
@@ -467,8 +478,13 @@ function xGetSAD32_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
 
     sub sp, sp, #64
     st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp]
@@ -1213,8 +1229,13 @@ function xGetSAD4_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
     
     mov x10, #1
     lsl x10, x10, x9       //1 << skip_lines
@@ -1277,8 +1298,13 @@ function xGetSAD8_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
     
     mov x10, #1
     lsl x10, x10, x9       //1 << skip_lines
@@ -1336,8 +1362,13 @@ function xGetSAD16_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
     
     mov x10, #1
     lsl x10, x10, x9       //1 << skip_lines
@@ -1401,8 +1432,13 @@ function xGetSAD32_x4_arm64
     mov x8, #0
     mov x9, #0
     mov x10, sp
+#if defined(__APPLE__)
     ldr w8, [x10], #4
     ldr w9, [x10]
+#else
+    ldr w8, [x10], #8
+    ldr w9, [x10]
+#endif
 
     sub sp, sp, #64
     st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp]
@@ -1835,3 +1871,4 @@ ret
 
 #endif
 #endif
+
