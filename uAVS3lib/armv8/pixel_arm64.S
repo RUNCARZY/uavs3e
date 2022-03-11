@@ -753,7 +753,6 @@ function pix_sub_8_arm64
     lsl x2, x2, #1
     lsl x4, x4, #1
 
-diff_w8_loopx:
     //load *org
     ld1 {v0.8h}, [x1], x2
     ld1 {v1.8h}, [x1], x2

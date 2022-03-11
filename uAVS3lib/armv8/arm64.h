@@ -55,6 +55,8 @@ void com_if_filter_hor_Ver_4_w16_arm64(const pel_t *src, int i_src, pel_t *dst, 
 
 void sub_trans_4x4_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift);
 void sub_trans_8x8_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift);
+
+void sub_trans_8x8_arm64_8bit(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift);
 void sub_trans_16x16_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift);
 void sub_trans_32x32_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift);
 
@@ -76,7 +78,11 @@ void pix_add_32_arm64(pel_t *dst, int i_dst, pel_t *pred, int i_pred, resi_t *re
 void partialButterfly4x4_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
 void partialButterfly8x8_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
 void partialButterfly16x16_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+void partialButterfly16x16_arm64_f(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+void partialButterfly16x16_arm64_s(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
 void partialButterfly32x32_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+void partialButterfly32x32_arm64_s(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+
 
 void add_inv_trans_4x4_arm64(coef_t *src, pel_t *pred, int i_pred, pel_t *dst, int i_dst, int bit_depth);
 void add_inv_trans_8x8_arm64(coef_t *src, pel_t *pred, int i_pred, pel_t *dst, int i_dst, int bit_depth);
@@ -87,6 +93,8 @@ void partialButterflyInverse4x4_arm64(coef_t *src, int i_src, coef_t *dst, int i
 void partialButterflyInverse8x8_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift, int bit_depth);
 void partialButterflyInverse16x16_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift, int bit_depth);
 void partialButterflyInverse32x32_arm64(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift, int bit_depth);
+
+int get_nz_num_arm64(coef_t *p_coef, int num_coeff);
 
 void xPredIntraVertAdi_arm64(pel_t *pSrc, pel_t *dst, int i_dst, int iWidth, int iHeight);
 void xPredIntraHorAdi_arm64(pel_t *pSrc, pel_t *dst, int i_dst, int iWidth, int iHeight);
@@ -101,6 +109,10 @@ void deblock_ver_luma_arm64(pel_t *src, int stride, int alpha, int beta);
 void deblock_hor_luma_arm64(pel_t *src, int stride, int alpha, int beta);
 void deblock_ver_chroma_arm64(pel_t *srcu, pel_t *srcv, int stride, int alpha_u, int beta_u, int alpha_v, int beta_v);
 void deblock_hor_chroma_arm64(pel_t *srcu, pel_t *srcv, int stride, int alpha_u, int beta_u, int alpha_v, int beta_v);
+
+int quant_normal_arm64(coef_t *curr_blk, int coef_num, int Q, int qp_const, int shift);
+void inv_quant_normal_arm64(coef_t *src, coef_t *dst, int coef_num, int QPI, int shift);
+
 
 #endif
 #endif

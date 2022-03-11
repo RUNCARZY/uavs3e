@@ -91,6 +91,388 @@ tx_dct2_pb4_end:
 
     ret
 
+//*************************************************************************************************
+//void sub_trans_8x8_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift)
+//x0: org
+//x1: i_org
+//x2: pred
+//x3: i_pred
+//x4: dst
+//x5: shift
+//*************************************************************************************************
+function sub_trans_8x8_arm64
+    lsl x1, x1, #1
+    lsl x3, x3, #1
+
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+    
+    //load *org
+    ld1 {v0.8h}, [x0], x1
+    ld1 {v1.8h}, [x0], x1
+    ld1 {v2.8h}, [x0], x1
+    ld1 {v3.8h}, [x0], x1
+    ld1 {v4.8h}, [x0], x1
+    ld1 {v5.8h}, [x0], x1
+    ld1 {v6.8h}, [x0], x1
+    ld1 {v7.8h}, [x0], x1
+    
+    //load *pred
+    ld1 {v16.8h}, [x2], x3
+    ld1 {v17.8h}, [x2], x3
+    ld1 {v18.8h}, [x2], x3
+    ld1 {v19.8h}, [x2], x3
+    ld1 {v20.8h}, [x2], x3
+    ld1 {v21.8h}, [x2], x3
+    ld1 {v22.8h}, [x2], x3
+    ld1 {v23.8h}, [x2], x3
+    
+    //resi
+    sub v0.8h, v0.8h, v16.8h
+    sub v1.8h, v1.8h, v17.8h
+    sub v2.8h, v2.8h, v18.8h
+    sub v3.8h, v3.8h, v19.8h
+    sub v4.8h, v4.8h, v20.8h
+    sub v5.8h, v5.8h, v21.8h
+    sub v6.8h, v6.8h, v22.8h
+    sub v7.8h, v7.8h, v23.8h
+
+    zip1 v16.8h, v0.8h, v4.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v0.8h, v4.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v1.8h, v5.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v1.8h, v5.8h    //12 44 13 45
+    zip1 v20.8h, v2.8h, v6.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v2.8h, v6.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v3.8h, v7.8h    //24 56 25 57
+    zip2 v23.8h, v3.8h, v7.8h    //28 60 29 61 30 62 31 63
+
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v21.8h, v23.8h   //
+
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+    
+    //e[0]-e[3]
+    add v0.8h, v16.8h, v23.8h
+    add v1.8h, v17.8h, v22.8h
+    add v2.8h, v18.8h, v21.8h
+    add v3.8h, v19.8h, v20.8h
+
+    //o[0]-o[3]
+    sub v4.8h, v16.8h, v23.8h
+    sub v5.8h, v17.8h, v22.8h
+    sub v6.8h, v18.8h, v21.8h
+    sub v7.8h, v19.8h, v20.8h
+
+    add v16.8h, v0.8h, v3.8h      //ee[0]
+    sub v17.8h, v0.8h, v3.8h      //eo[0]
+    add v18.8h, v1.8h, v2.8h      //ee[1]
+    sub v19.8h, v1.8h, v2.8h      //eo[1]
+
+    mov w6, #32
+    mov v0.h[0], w6
+    mov w6, #44
+    mov w7, #38
+    mov w8, #25
+    mov w9, #9
+    mov v0.h[1], w6
+    mov v0.h[2], w7
+    mov v0.h[3], w8
+    mov v0.h[4], w9
+    mov w6, #42
+    mov w7, #17
+    mov v0.h[5], w6
+    mov v0.h[6], w7
+    
+    //dst[0]-dst[3]
+    smull v20.4s, v16.4h, v0.h[0]
+    smull2 v21.4s, v16.8h, v0.h[0]
+    smlal v20.4s, v18.4h, v0.h[0]
+    smlal2 v21.4s, v18.8h, v0.h[0]
+
+    smull v22.4s, v4.4h, v0.h[1]
+    smull2 v23.4s, v4.8h, v0.h[1]
+    smlal v22.4s, v5.4h, v0.h[2]
+    smlal2 v23.4s, v5.8h, v0.h[2]
+    smlal v22.4s, v6.4h, v0.h[3]
+    smlal2 v23.4s, v6.8h, v0.h[3]
+    smlal v22.4s, v7.4h, v0.h[4]
+    smlal2 v23.4s, v7.8h, v0.h[4]
+
+    smull v24.4s, v17.4h, v0.h[5]
+    smull2 v25.4s, v17.8h, v0.h[5]
+    smlal v24.4s, v19.4h, v0.h[6]
+    smlal2 v25.4s, v19.8h, v0.h[6]
+    
+    smull v26.4s, v4.4h, v0.h[2]
+    smull2 v27.4s, v4.8h, v0.h[2]
+    smlsl v26.4s, v5.4h, v0.h[4]
+    smlsl2 v27.4s, v5.8h, v0.h[4]
+    smlsl v26.4s, v6.4h, v0.h[1]
+    smlsl2 v27.4s, v6.8h, v0.h[1]
+    smlsl v26.4s, v7.4h, v0.h[3]
+    smlsl2 v27.4s, v7.8h, v0.h[3]
+
+    cmp w5, #3
+    bne tx_dct2_pb8_shift1
+    sqrshrn v20.4h, v20.4s, #3
+    sqrshrn2 v20.8h, v21.4s, #3
+    sqrshrn v21.4h, v22.4s, #3
+    sqrshrn2 v21.8h, v23.4s, #3
+    sqrshrn v22.4h, v24.4s, #3
+    sqrshrn2 v22.8h, v25.4s, #3
+    sqrshrn v23.4h, v26.4s, #3
+    sqrshrn2 v23.8h, v27.4s, #3
+    b tx_dct2_pb8_shift3_end1
+    
+tx_dct2_pb8_shift1:
+    sqrshrn v20.4h, v20.4s, #1
+    sqrshrn2 v20.8h, v21.4s, #1
+    sqrshrn v21.4h, v22.4s, #1
+    sqrshrn2 v21.8h, v23.4s, #1
+    sqrshrn v22.4h, v24.4s, #1
+    sqrshrn2 v22.8h, v25.4s, #1
+    sqrshrn v23.4h, v26.4s, #1
+    sqrshrn2 v23.8h, v27.4s, #1
+
+tx_dct2_pb8_shift3_end1:
+    //dst[4]-dst[7]
+    smull v24.4s, v16.4h, v0.h[0]
+    smull2 v25.4s, v16.8h, v0.h[0]
+    smlsl v24.4s, v18.4h, v0.h[0]
+    smlsl2 v25.4s, v18.8h, v0.h[0]
+    
+    smull v26.4s, v4.4h, v0.h[3]
+    smull2 v27.4s, v4.8h, v0.h[3]
+    smlsl v26.4s, v5.4h, v0.h[1]
+    smlsl2 v27.4s, v5.8h, v0.h[1]
+    smlal v26.4s, v6.4h, v0.h[4]
+    smlal2 v27.4s, v6.8h, v0.h[4]
+    smlal v26.4s, v7.4h, v0.h[2]
+    smlal2 v27.4s, v7.8h, v0.h[2]
+    
+    smull v28.4s, v17.4h, v0.h[6]
+    smull2 v29.4s, v17.8h, v0.h[6]
+    smlsl v28.4s, v19.4h, v0.h[5]
+    smlsl2 v29.4s, v19.8h, v0.h[5]
+    
+    smull v30.4s, v4.4h, v0.h[4]
+    smull2 v31.4s, v4.8h, v0.h[4]
+    smlsl v30.4s, v5.4h, v0.h[3]
+    smlsl2 v31.4s, v5.8h, v0.h[3]
+    smlal v30.4s, v6.4h, v0.h[2]
+    smlal2 v31.4s, v6.8h, v0.h[2]
+    smlsl v30.4s, v7.4h, v0.h[1]
+    smlsl2 v31.4s, v7.8h, v0.h[1]
+    
+    cmp w5, #3
+    bne tx_dct2_pb8_shift1_2
+    sqrshrn v24.4h, v24.4s, #3
+    sqrshrn2 v24.8h, v25.4s, #3
+    sqrshrn v25.4h, v26.4s, #3
+    sqrshrn2 v25.8h, v27.4s, #3
+    sqrshrn v26.4h, v28.4s, #3
+    sqrshrn2 v26.8h, v29.4s, #3
+    sqrshrn v27.4h, v30.4s, #3
+    sqrshrn2 v27.8h, v31.4s, #3
+    b tx_dct2_pb8_shift3_end2
+    
+tx_dct2_pb8_shift1_2:
+    sqrshrn v24.4h, v24.4s, #1
+    sqrshrn2 v24.8h, v25.4s, #1
+    sqrshrn v25.4h, v26.4s, #1
+    sqrshrn2 v25.8h, v27.4s, #1
+    sqrshrn v26.4h, v28.4s, #1
+    sqrshrn2 v26.8h, v29.4s, #1
+    sqrshrn v27.4h, v30.4s, #1
+    sqrshrn2 v27.8h, v31.4s, #1
+
+tx_dct2_pb8_shift3_end2:
+    zip1 v16.8h, v20.8h, v24.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v20.8h, v24.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v21.8h, v25.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v21.8h, v25.8h    //12 44 13 45
+    zip1 v28.8h, v22.8h, v26.8h    //16 48 17 49 18 50 19 51
+    zip2 v29.8h, v22.8h, v26.8h    //20 52 21 53 22 54 23 55
+    zip1 v30.8h, v23.8h, v27.8h    //24 56 25 57
+    zip2 v31.8h, v23.8h, v27.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v28.8h, v30.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v28.8h, v30.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v29.8h, v31.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v29.8h, v31.8h   //
+    
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+    
+    //e[0]-e[3]
+    saddl v0.4s, v16.4h, v23.4h
+    saddl v1.4s, v17.4h, v22.4h
+    saddl v2.4s, v18.4h, v21.4h
+    saddl v3.4s, v19.4h, v20.4h
+
+    //o[0]-o[3]
+    ssubl v4.4s, v16.4h, v23.4h
+    ssubl v5.4s, v17.4h, v22.4h
+    ssubl v6.4s, v18.4h, v21.4h
+    ssubl v7.4s, v19.4h, v20.4h
+    
+    add v24.4s, v0.4s, v3.4s      //ee[0]
+    sub v25.4s, v0.4s, v3.4s      //eo[0]
+    add v26.4s, v1.4s, v2.4s      //ee[1]
+    sub v27.4s, v1.4s, v2.4s      //eo[1]
+
+    mov w6, #32
+    mov v30.s[0], w6
+    mov w6, #44
+    mov w7, #38
+    mov w8, #25
+    mov w9, #9
+    mov v30.s[1], w6
+    mov v30.s[2], w7
+    mov v30.s[3], w8
+    mov v31.s[0], w9
+    mov w6, #42
+    mov w7, #17
+    mov v31.s[1], w6
+    mov v31.s[2], w7
+
+    //dst[0]-dst[3]
+    mul v0.4s, v24.4s, v30.s[0]
+    mla v0.4s, v26.4s, v30.s[0]
+    
+    mul v1.4s, v4.4s, v30.s[1]
+    mla v1.4s, v5.4s, v30.s[2]
+    mla v1.4s, v6.4s, v30.s[3]
+    mla v1.4s, v7.4s, v31.s[0]
+
+    mul v2.4s, v25.4s, v31.s[1]
+    mla v2.4s, v27.4s, v31.s[2]
+    
+    mul v3.4s, v4.4s, v30.s[2]
+    mls v3.4s, v5.4s, v31.s[0]
+    mls v3.4s, v6.4s, v30.s[1]
+    mls v3.4s, v7.4s, v30.s[3]
+
+    sqrshrn v8.4h, v0.4s, #8
+    sqrshrn v9.4h, v1.4s, #8
+    sqrshrn v10.4h, v2.4s, #8
+    sqrshrn v11.4h, v3.4s, #8
+
+    //dst[4]-dst[7]
+    mul v0.4s, v24.4s, v30.s[0]
+    mls v0.4s, v26.4s, v30.s[0]
+    
+    mul v1.4s, v4.4s, v30.s[3]
+    mls v1.4s, v5.4s, v30.s[1]
+    mla v1.4s, v6.4s, v31.s[0]
+    mla v1.4s, v7.4s, v30.s[2]
+    
+    mul v2.4s, v25.4s, v31.s[2]
+    mls v2.4s, v27.4s, v31.s[1]
+    
+    mul v3.4s, v4.4s, v31.s[0]
+    mls v3.4s, v5.4s, v30.s[3]
+    mla v3.4s, v6.4s, v30.s[2]
+    mls v3.4s, v7.4s, v30.s[1]
+    
+    sqrshrn v12.4h, v0.4s, #8
+    sqrshrn v13.4h, v1.4s, #8
+    sqrshrn v14.4h, v2.4s, #8
+    sqrshrn v15.4h, v3.4s, #8
+
+    //e[0]-e[3]
+    saddl2 v0.4s, v16.8h, v23.8h
+    saddl2 v1.4s, v17.8h, v22.8h
+    saddl2 v2.4s, v18.8h, v21.8h
+    saddl2 v3.4s, v19.8h, v20.8h
+
+    //o[0]-o[3]
+    ssubl2 v4.4s, v16.8h, v23.8h
+    ssubl2 v5.4s, v17.8h, v22.8h
+    ssubl2 v6.4s, v18.8h, v21.8h
+    ssubl2 v7.4s, v19.8h, v20.8h
+
+    add v24.4s, v0.4s, v3.4s      //ee[0]
+    sub v25.4s, v0.4s, v3.4s      //eo[0]
+    add v26.4s, v1.4s, v2.4s      //ee[1]
+    sub v27.4s, v1.4s, v2.4s      //eo[1]
+
+    //dst[0]-dst[3]
+    mul v0.4s, v24.4s, v30.s[0]
+    mla v0.4s, v26.4s, v30.s[0]
+    
+    mul v1.4s, v4.4s, v30.s[1]
+    mla v1.4s, v5.4s, v30.s[2]
+    mla v1.4s, v6.4s, v30.s[3]
+    mla v1.4s, v7.4s, v31.s[0]
+    
+    mul v2.4s, v25.4s, v31.s[1]
+    mla v2.4s, v27.4s, v31.s[2]
+    
+    mul v3.4s, v4.4s, v30.s[2]
+    mls v3.4s, v5.4s, v31.s[0]
+    mls v3.4s, v6.4s, v30.s[1]
+    mls v3.4s, v7.4s, v30.s[3]
+    
+    sqrshrn2 v8.8h, v0.4s, #8
+    sqrshrn2 v9.8h, v1.4s, #8
+    sqrshrn2 v10.8h, v2.4s, #8
+    sqrshrn2 v11.8h, v3.4s, #8
+
+    //dst[4]-dst[7]
+    mul v0.4s, v24.4s, v30.s[0]
+    mls v0.4s, v26.4s, v30.s[0]
+    
+    mul v1.4s, v4.4s, v30.s[3]
+    mls v1.4s, v5.4s, v30.s[1]
+    mla v1.4s, v6.4s, v31.s[0]
+    mla v1.4s, v7.4s, v30.s[2]
+    
+    mul v2.4s, v25.4s, v31.s[2]
+    mls v2.4s, v27.4s, v31.s[1]
+    
+    mul v3.4s, v4.4s, v31.s[0]
+    mls v3.4s, v5.4s, v30.s[3]
+    mla v3.4s, v6.4s, v30.s[2]
+    mls v3.4s, v7.4s, v30.s[1]
+    
+    sqrshrn2 v12.8h, v0.4s, #8
+    sqrshrn2 v13.8h, v1.4s, #8
+    sqrshrn2 v14.8h, v2.4s, #8
+    sqrshrn2 v15.8h, v3.4s, #8
+
+    st1 {v8.8h - v11.8h}, [x4], #64
+    st1 {v12.8h - v15.8h}, [x4]
+
+    ld1 {v12.8h - v15.8h}, [sp], #64
+    ld1 {v8.8h - v11.8h}, [sp], #64
+
+    ret
 
 tx_dct2_pb8_coef:
 .hword 32, 44, 42, 38, 32, 25, 17, 9, \
@@ -247,6 +629,1154 @@ tx_dct2_pb8_end:
 
     ret
 
+//*************************************************************************************************
+//void partialButterfly16x16_arm64_f(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+//x0: src, 16 bit
+//x1: i_src
+//x2: dst
+//x3: i_dst
+//x4: shift
+//*************************************************************************************************
+function partialButterfly16x16_arm64_f
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
+    lsl x1, x1, #1
+    lsl x3, x3, #1
+    
+    mov x5, sp
+    mov x6, x0
+    mov x10, #2
+
+    ld1 {v0.8h, v1.8h}, [x6], x1
+    ld1 {v2.8h, v3.8h}, [x6], x1
+    ld1 {v4.8h, v5.8h}, [x6], x1
+    ld1 {v6.8h, v7.8h}, [x6], x1
+    ld1 {v8.8h, v9.8h}, [x6], x1
+    ld1 {v10.8h, v11.8h}, [x6], x1
+    ld1 {v12.8h, v13.8h}, [x6], x1
+    ld1 {v14.8h, v15.8h}, [x6], x1
+
+    //transpose
+    zip1 v16.8h, v0.8h, v8.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v0.8h, v8.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v2.8h, v10.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v2.8h, v10.8h    //12 44 13 45
+    zip1 v20.8h, v4.8h, v12.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v4.8h, v12.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v6.8h, v14.8h    //24 56 25 57
+    zip2 v23.8h, v6.8h, v14.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v2.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v4.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v6.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v8.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v10.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v12.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v14.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v8.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v8.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v2.4s, v10.4s    //
+    zip2 v19.4s, v2.4s, v10.4s    //
+    zip1 v20.4s, v4.4s, v12.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v4.4s, v12.4s    //
+    zip1 v22.4s, v6.4s, v14.4s    //
+    zip2 v23.4s, v6.4s, v14.4s    //
+
+    sub x5, x5, #128
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+
+    zip1 v16.8h, v1.8h, v9.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v1.8h, v9.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v3.8h, v11.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v3.8h, v11.8h    //12 44 13 45
+    zip1 v20.8h, v5.8h, v13.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v5.8h, v13.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v7.8h, v15.8h    //24 56 25 57
+    zip2 v23.8h, v7.8h, v15.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v21.8h, v23.8h   //
+
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+
+    sub x5, x5, #192
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+
+    ld1 {v0.8h, v1.8h}, [x6], x1
+    ld1 {v2.8h, v3.8h}, [x6], x1
+    ld1 {v4.8h, v5.8h}, [x6], x1
+    ld1 {v6.8h, v7.8h}, [x6], x1
+    ld1 {v8.8h, v9.8h}, [x6], x1
+    ld1 {v10.8h, v11.8h}, [x6], x1
+    ld1 {v12.8h, v13.8h}, [x6], x1
+    ld1 {v14.8h, v15.8h}, [x6], x1
+    
+    //transpose
+    zip1 v16.8h, v0.8h, v8.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v0.8h, v8.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v2.8h, v10.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v2.8h, v10.8h    //12 44 13 45
+    zip1 v20.8h, v4.8h, v12.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v4.8h, v12.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v6.8h, v14.8h    //24 56 25 57
+    zip2 v23.8h, v6.8h, v14.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v2.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v4.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v6.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v8.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v10.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v12.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v14.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v8.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v8.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v2.4s, v10.4s    //
+    zip2 v19.4s, v2.4s, v10.4s    //
+    zip1 v20.4s, v4.4s, v12.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v4.4s, v12.4s    //
+    zip1 v22.4s, v6.4s, v14.4s    //
+    zip2 v23.4s, v6.4s, v14.4s    //
+    
+    sub x5, x5, #192
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+    
+    zip1 v16.8h, v1.8h, v9.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v1.8h, v9.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v3.8h, v11.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v3.8h, v11.8h    //12 44 13 45
+    zip1 v20.8h, v5.8h, v13.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v5.8h, v13.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v7.8h, v15.8h    //24 56 25 57
+    zip2 v23.8h, v7.8h, v15.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+    
+    sub x5, x5, #192
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+
+    sub x6, sp, #128
+    ld1 {v0.8h - v3.8h}, [x6], #64
+    ld1 {v4.8h - v7.8h}, [x6]
+    sub x6, sp, #256
+    ld1 {v8.8h - v11.8h}, [x6], #64
+    ld1 {v12.8h - v15.8h}, [x6]
+
+tx_dct2_pb16_loopx:
+    //e[0]-e[7]
+    add v16.8h, v0.8h, v15.8h
+    add v17.8h, v1.8h, v14.8h
+    add v18.8h, v2.8h, v13.8h
+    add v19.8h, v3.8h, v12.8h
+    add v20.8h, v4.8h, v11.8h
+    add v21.8h, v5.8h, v10.8h
+    add v22.8h, v6.8h, v9.8h
+    add v23.8h, v7.8h, v8.8h
+
+    //o[0]-o[7]
+    sub v24.8h, v0.8h, v15.8h
+    sub v25.8h, v1.8h, v14.8h
+    sub v26.8h, v2.8h, v13.8h
+    sub v27.8h, v3.8h, v12.8h
+    sub v28.8h, v4.8h, v11.8h
+    sub v29.8h, v5.8h, v10.8h
+    sub v30.8h, v6.8h, v9.8h
+    sub v31.8h, v7.8h, v8.8h
+
+    //eo[0]-eo[3]
+    sub v0.8h, v16.8h, v23.8h
+    sub v1.8h, v17.8h, v22.8h
+    sub v2.8h, v18.8h, v21.8h
+    sub v3.8h, v19.8h, v20.8h
+
+    mov w6, #44
+    mov w7, #38
+    mov w8, #25
+    mov w9, #9
+    mov v4.h[0], w6
+    mov v4.h[1], w7
+    mov v4.h[2], w8
+    mov v4.h[3], w9
+    mov w6, #32
+    mov w7, #42
+    mov w8, #17
+    mov v4.h[4], w6
+    mov v4.h[5], w7
+    mov v4.h[6], w8
+    mov w6, #45
+    mov w7, #43
+    mov w8, #40
+    mov w9, #35
+    mov v5.h[0], w6
+    mov v5.h[1], w7
+    mov v5.h[2], w8
+    mov v5.h[3], w9
+    mov w6, #29
+    mov w7, #21
+    mov w8, #13
+    mov w9, #4
+    mov v5.h[4], w6
+    mov v5.h[5], w7
+    mov v5.h[6], w8
+    mov v5.h[7], w9
+
+    //dst[2], dst[6], dst[10], dst[14]
+    smull v8.4s, v0.4h, v4.h[0]
+    smull2 v9.4s, v0.8h, v4.h[0]
+    smlal v8.4s, v1.4h, v4.h[1]
+    smlal2 v9.4s, v1.8h, v4.h[1]
+    smlal v8.4s, v2.4h, v4.h[2]
+    smlal2 v9.4s, v2.8h, v4.h[2]
+    smlal v8.4s, v3.4h, v4.h[3]
+    smlal2 v9.4s, v3.8h, v4.h[3]
+
+    smull v10.4s, v0.4h, v4.h[1]
+    smull2 v11.4s, v0.8h, v4.h[1]
+    smlsl v10.4s, v1.4h, v4.h[3]
+    smlsl2 v11.4s, v1.8h, v4.h[3]
+    smlsl v10.4s, v2.4h, v4.h[0]
+    smlsl2 v11.4s, v2.8h, v4.h[0]
+    smlsl v10.4s, v3.4h, v4.h[2]
+    smlsl2 v11.4s, v3.8h, v4.h[2]
+
+    smull v12.4s, v0.4h, v4.h[2]
+    smull2 v13.4s, v0.8h, v4.h[2]
+    smlsl v12.4s, v1.4h, v4.h[0]
+    smlsl2 v13.4s, v1.8h, v4.h[0]
+    smlal v12.4s, v2.4h, v4.h[3]
+    smlal2 v13.4s, v2.8h, v4.h[3]
+    smlal v12.4s, v3.4h, v4.h[1]
+    smlal2 v13.4s, v3.8h, v4.h[1]
+
+    smull v14.4s, v0.4h, v4.h[3]
+    smull2 v15.4s, v0.8h, v4.h[3]
+    smlsl v14.4s, v1.4h, v4.h[2]
+    smlsl2 v15.4s, v1.8h, v4.h[2]
+    smlal v14.4s, v2.4h, v4.h[1]
+    smlal2 v15.4s, v2.8h, v4.h[1]
+    smlsl v14.4s, v3.4h, v4.h[0]
+    smlsl2 v15.4s, v3.8h, v4.h[0]
+
+    cmp w4, #4
+    bne tx_dct2_pb16_shift1
+    sqrshrn v8.4h, v8.4s, #4
+    sqrshrn2 v8.8h, v9.4s, #4
+    sqrshrn v9.4h, v10.4s, #4
+    sqrshrn2 v9.8h, v11.4s, #4
+    sqrshrn v10.4h, v12.4s, #4
+    sqrshrn2 v10.8h, v13.4s, #4
+    sqrshrn v11.4h, v14.4s, #4
+    sqrshrn2 v11.8h, v15.4s, #4
+    b tx_dct2_pb16_shift_end
+
+tx_dct2_pb16_shift1:
+    sqrshrn v8.4h, v8.4s, #2
+    sqrshrn2 v8.8h, v9.4s, #2
+    sqrshrn v9.4h, v10.4s, #2
+    sqrshrn2 v9.8h, v11.4s, #2
+    sqrshrn v10.4h, v12.4s, #2
+    sqrshrn2 v10.8h, v13.4s, #2
+    sqrshrn v11.4h, v14.4s, #2
+    sqrshrn2 v11.8h, v15.4s, #2
+    
+tx_dct2_pb16_shift_end:
+
+    lsl x6, x3, #1  //2 * i_dst
+    lsl x7, x6, #1  //4 * i_dst
+    add x8, x2, x6
+    st1 {v8.8h}, [x8], x7
+    st1 {v9.8h}, [x8], x7
+    st1 {v10.8h}, [x8], x7
+    st1 {v11.8h}, [x8], x7
+
+    //ee[0]-ee[3]
+    add v0.8h, v16.8h, v23.8h
+    add v1.8h, v17.8h, v22.8h
+    add v2.8h, v18.8h, v21.8h
+    add v3.8h, v19.8h, v20.8h
+
+    add v16.8h, v0.8h, v3.8h        //eee[0]
+    sub v17.8h, v0.8h, v3.8h        //eeo[0]
+    add v18.8h, v1.8h, v2.8h        //eee[1]
+    sub v19.8h, v1.8h, v2.8h        //eeo[1]
+
+    //dst[0], dst[4], dst[8], dst[12]
+    smull v8.4s, v16.4h, v4.h[4]
+    smull2 v9.4s, v16.8h, v4.h[4]
+    smlal v8.4s, v18.4h, v4.h[4]
+    smlal2 v9.4s, v18.8h, v4.h[4]
+    
+    smull v10.4s, v17.4h, v4.h[5]
+    smull2 v11.4s, v17.8h, v4.h[5]
+    smlal v10.4s, v19.4h, v4.h[6]
+    smlal2 v11.4s, v19.8h, v4.h[6]
+    
+    smull v12.4s, v16.4h, v4.h[4]
+    smull2 v13.4s, v16.8h, v4.h[4]
+    smlsl v12.4s, v18.4h, v4.h[4]
+    smlsl2 v13.4s, v18.8h, v4.h[4]
+    
+    smull v14.4s, v17.4h, v4.h[6]
+    smull2 v15.4s, v17.8h, v4.h[6]
+    smlsl v14.4s, v19.4h, v4.h[5]
+    smlsl2 v15.4s, v19.8h, v4.h[5]
+
+    cmp w4, #4
+    bne tx_dct2_pb16_shift2
+    sqrshrn v8.4h, v8.4s, #4
+    sqrshrn2 v8.8h, v9.4s, #4
+    sqrshrn v9.4h, v10.4s, #4
+    sqrshrn2 v9.8h, v11.4s, #4
+    sqrshrn v10.4h, v12.4s, #4
+    sqrshrn2 v10.8h, v13.4s, #4
+    sqrshrn v11.4h, v14.4s, #4
+    sqrshrn2 v11.8h, v15.4s, #4
+    b tx_dct2_pb16_shift_end2
+    
+    tx_dct2_pb16_shift2:
+    sqrshrn v8.4h, v8.4s, #2
+    sqrshrn2 v8.8h, v9.4s, #2
+    sqrshrn v9.4h, v10.4s, #2
+    sqrshrn2 v9.8h, v11.4s, #2
+    sqrshrn v10.4h, v12.4s, #2
+    sqrshrn2 v10.8h, v13.4s, #2
+    sqrshrn v11.4h, v14.4s, #2
+    sqrshrn2 v11.8h, v15.4s, #2
+
+tx_dct2_pb16_shift_end2:
+    
+    lsl x6, x3, #2  //4 * i_dst
+    mov x8, x2
+    st1 {v8.8h}, [x8], x6
+    st1 {v9.8h}, [x8], x6
+    st1 {v10.8h}, [x8], x6
+    st1 {v11.8h}, [x8], x6
+
+    //dst[1], dst[3], dst[5], dst[7], dst[9], dst[11], dst[13], dst[15]
+
+    smull v0.4s, v24.4h, v5.h[0]
+    smull2 v1.4s, v24.8h, v5.h[0]
+    smlal v0.4s, v25.4h, v5.h[1]
+    smlal2 v1.4s, v25.8h, v5.h[1]
+    smlal v0.4s, v26.4h, v5.h[2]
+    smlal2 v1.4s, v26.8h, v5.h[2]
+    smlal v0.4s, v27.4h, v5.h[3]
+    smlal2 v1.4s, v27.8h, v5.h[3]
+    smlal v0.4s, v28.4h, v5.h[4]
+    smlal2 v1.4s, v28.8h, v5.h[4]
+    smlal v0.4s, v29.4h, v5.h[5]
+    smlal2 v1.4s, v29.8h, v5.h[5]
+    smlal v0.4s, v30.4h, v5.h[6]
+    smlal2 v1.4s, v30.8h, v5.h[6]
+    smlal v0.4s, v31.4h, v5.h[7]
+    smlal2 v1.4s, v31.8h, v5.h[7]
+
+    smull v2.4s, v24.4h, v5.h[1]
+    smull2 v3.4s, v24.8h, v5.h[1]
+    smlal v2.4s, v25.4h, v5.h[4]
+    smlal2 v3.4s, v25.8h, v5.h[4]
+    smlal v2.4s, v26.4h, v5.h[7]
+    smlal2 v3.4s, v26.8h, v5.h[7]
+    smlsl v2.4s, v27.4h, v5.h[5]
+    smlsl2 v3.4s, v27.8h, v5.h[5]
+    smlsl v2.4s, v28.4h, v5.h[2]
+    smlsl2 v3.4s, v28.8h, v5.h[2]
+    smlsl v2.4s, v29.4h, v5.h[0]
+    smlsl2 v3.4s, v29.8h, v5.h[0]
+    smlsl v2.4s, v30.4h, v5.h[3]
+    smlsl2 v3.4s, v30.8h, v5.h[3]
+    smlsl v2.4s, v31.4h, v5.h[6]
+    smlsl2 v3.4s, v31.8h, v5.h[6]
+
+    smull v6.4s, v24.4h, v5.h[2]
+    smull2 v7.4s, v24.8h, v5.h[2]
+    smlal v6.4s, v25.4h, v5.h[7]
+    smlal2 v7.4s, v25.8h, v5.h[7]
+    smlsl v6.4s, v26.4h, v5.h[3]
+    smlsl2 v7.4s, v26.8h, v5.h[3]
+    smlsl v6.4s, v27.4h, v5.h[1]
+    smlsl2 v7.4s, v27.8h, v5.h[1]
+    smlsl v6.4s, v28.4h, v5.h[6]
+    smlsl2 v7.4s, v28.8h, v5.h[6]
+    smlal v6.4s, v29.4h, v5.h[4]
+    smlal2 v7.4s, v29.8h, v5.h[4]
+    smlal v6.4s, v30.4h, v5.h[0]
+    smlal2 v7.4s, v30.8h, v5.h[0]
+    smlal v6.4s, v31.4h, v5.h[5]
+    smlal2 v7.4s, v31.8h, v5.h[5]
+
+    smull v8.4s, v24.4h, v5.h[3]
+    smull2 v9.4s, v24.8h, v5.h[3]
+    smlsl v8.4s, v25.4h, v5.h[5]
+    smlsl2 v9.4s, v25.8h, v5.h[5]
+    smlsl v8.4s, v26.4h, v5.h[1]
+    smlsl2 v9.4s, v26.8h, v5.h[1]
+    smlal v8.4s, v27.4h, v5.h[7]
+    smlal2 v9.4s, v27.8h, v5.h[7]
+    smlal v8.4s, v28.4h, v5.h[0]
+    smlal2 v9.4s, v28.8h, v5.h[0]
+    smlal v8.4s, v29.4h, v5.h[6]
+    smlal2 v9.4s, v29.8h, v5.h[6]
+    smlsl v8.4s, v30.4h, v5.h[2]
+    smlsl2 v9.4s, v30.8h, v5.h[2]
+    smlsl v8.4s, v31.4h, v5.h[4]
+    smlsl2 v9.4s, v31.8h, v5.h[4]
+
+    smull v10.4s, v24.4h, v5.h[4]
+    smull2 v11.4s, v24.8h, v5.h[4]
+    smlsl v10.4s, v25.4h, v5.h[2]
+    smlsl2 v11.4s, v25.8h, v5.h[2]
+    smlsl v10.4s, v26.4h, v5.h[6]
+    smlsl2 v11.4s, v26.8h, v5.h[6]
+    smlal v10.4s, v27.4h, v5.h[0]
+    smlal2 v11.4s, v27.8h, v5.h[0]
+    smlsl v10.4s, v28.4h, v5.h[7]
+    smlsl2 v11.4s, v28.8h, v5.h[7]
+    smlsl v10.4s, v29.4h, v5.h[1]
+    smlsl2 v11.4s, v29.8h, v5.h[1]
+    smlal v10.4s, v30.4h, v5.h[5]
+    smlal2 v11.4s, v30.8h, v5.h[5]
+    smlal v10.4s, v31.4h, v5.h[3]
+    smlal2 v11.4s, v31.8h, v5.h[3]
+    
+    smull v12.4s, v24.4h, v5.h[5]
+    smull2 v13.4s, v24.8h, v5.h[5]
+    smlsl v12.4s, v25.4h, v5.h[0]
+    smlsl2 v13.4s, v25.8h, v5.h[0]
+    smlal v12.4s, v26.4h, v5.h[4]
+    smlal2 v13.4s, v26.8h, v5.h[4]
+    smlal v12.4s, v27.4h, v5.h[6]
+    smlal2 v13.4s, v27.8h, v5.h[6]
+    smlsl v12.4s, v28.4h, v5.h[1]
+    smlsl2 v13.4s, v28.8h, v5.h[1]
+    smlal v12.4s, v29.4h, v5.h[3]
+    smlal2 v13.4s, v29.8h, v5.h[3]
+    smlal v12.4s, v30.4h, v5.h[7]
+    smlal2 v13.4s, v30.8h, v5.h[7]
+    smlsl v12.4s, v31.4h, v5.h[2]
+    smlsl2 v13.4s, v31.8h, v5.h[2]
+
+    smull v14.4s, v24.4h, v5.h[6]
+    smull2 v15.4s, v24.8h, v5.h[6]
+    smlsl v14.4s, v25.4h, v5.h[3]
+    smlsl2 v15.4s, v25.8h, v5.h[3]
+    smlal v14.4s, v26.4h, v5.h[0]
+    smlal2 v15.4s, v26.8h, v5.h[0]
+    smlsl v14.4s, v27.4h, v5.h[2]
+    smlsl2 v15.4s, v27.8h, v5.h[2]
+    smlal v14.4s, v28.4h, v5.h[5]
+    smlal2 v15.4s, v28.8h, v5.h[5]
+    smlal v14.4s, v29.4h, v5.h[7]
+    smlal2 v15.4s, v29.8h, v5.h[7]
+    smlsl v14.4s, v30.4h, v5.h[4]
+    smlsl2 v15.4s, v30.8h, v5.h[4]
+    smlal v14.4s, v31.4h, v5.h[1]
+    smlal2 v15.4s, v31.8h, v5.h[1]
+
+    smull v16.4s, v24.4h, v5.h[7]
+    smull2 v17.4s, v24.8h, v5.h[7]
+    smlsl v16.4s, v25.4h, v5.h[6]
+    smlsl2 v17.4s, v25.8h, v5.h[6]
+    smlal v16.4s, v26.4h, v5.h[5]
+    smlal2 v17.4s, v26.8h, v5.h[5]
+    smlsl v16.4s, v27.4h, v5.h[4]
+    smlsl2 v17.4s, v27.8h, v5.h[4]
+    smlal v16.4s, v28.4h, v5.h[3]
+    smlal2 v17.4s, v28.8h, v5.h[3]
+    smlsl v16.4s, v29.4h, v5.h[2]
+    smlsl2 v17.4s, v29.8h, v5.h[2]
+    smlal v16.4s, v30.4h, v5.h[1]
+    smlal2 v17.4s, v30.8h, v5.h[1]
+    smlsl v16.4s, v31.4h, v5.h[0]
+    smlsl2 v17.4s, v31.8h, v5.h[0]
+
+    cmp w4, #4
+    bne tx_dct2_pb16_shift3
+    sqrshrn v0.4h, v0.4s, #4
+    sqrshrn2 v0.8h, v1.4s, #4
+    sqrshrn v1.4h, v2.4s, #4
+    sqrshrn2 v1.8h, v3.4s, #4
+    sqrshrn v2.4h, v6.4s, #4
+    sqrshrn2 v2.8h, v7.4s, #4
+    sqrshrn v3.4h, v8.4s, #4
+    sqrshrn2 v3.8h, v9.4s, #4
+    sqrshrn v4.4h, v10.4s, #4
+    sqrshrn2 v4.8h, v11.4s, #4
+    sqrshrn v5.4h, v12.4s, #4
+    sqrshrn2 v5.8h, v13.4s, #4
+    sqrshrn v6.4h, v14.4s, #4
+    sqrshrn2 v6.8h, v15.4s, #4
+    sqrshrn v7.4h, v16.4s, #4
+    sqrshrn2 v7.8h, v17.4s, #4
+
+    b tx_dct2_pb16_shift_end3
+
+tx_dct2_pb16_shift3:
+    sqrshrn v0.4h, v0.4s, #2
+    sqrshrn2 v0.8h, v1.4s, #2
+    sqrshrn v1.4h, v2.4s, #2
+    sqrshrn2 v1.8h, v3.4s, #2
+    sqrshrn v2.4h, v6.4s, #2
+    sqrshrn2 v2.8h, v7.4s, #2
+    sqrshrn v3.4h, v8.4s, #2
+    sqrshrn2 v3.8h, v9.4s, #2
+    sqrshrn v4.4h, v10.4s, #2
+    sqrshrn2 v4.8h, v11.4s, #2
+    sqrshrn v5.4h, v12.4s, #2
+    sqrshrn2 v5.8h, v13.4s, #2
+    sqrshrn v6.4h, v14.4s, #2
+    sqrshrn2 v6.8h, v15.4s, #2
+    sqrshrn v7.4h, v16.4s, #2
+    sqrshrn2 v7.8h, v17.4s, #2
+    
+tx_dct2_pb16_shift_end3:
+    lsl x6, x3, #1  //2 * i_dst
+    add x8, x2, x3
+    st1 {v0.8h}, [x8], x6
+    st1 {v1.8h}, [x8], x6
+    st1 {v2.8h}, [x8], x6
+    st1 {v3.8h}, [x8], x6
+    st1 {v4.8h}, [x8], x6
+    st1 {v5.8h}, [x8], x6
+    st1 {v6.8h}, [x8], x6
+    st1 {v7.8h}, [x8], x6
+
+    sub x6, sp, #384
+    ld1 {v0.8h - v3.8h}, [x6], #64
+    ld1 {v4.8h - v7.8h}, [x6]
+    sub x6, sp, #512
+    ld1 {v8.8h - v11.8h}, [x6], #64
+    ld1 {v12.8h - v15.8h}, [x6]
+
+    add x2, x2, #16
+    
+    subs x10, x10, #1
+    bgt tx_dct2_pb16_loopx
+
+    ld1 {v12.8h - v15.8h}, [sp], #64
+    ld1 {v8.8h - v11.8h}, [sp], #64
+ret
+
+//*************************************************************************************************
+//void partialButterfly16x16_arm64_s(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+//x0: src, 16 bit
+//x1: i_src
+//x2: dst
+//x3: i_dst
+//x4: shift
+//*************************************************************************************************
+function partialButterfly16x16_arm64_s
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
+    lsl x1, x1, #1
+    lsl x3, x3, #1
+    
+    mov x5, sp
+    mov x6, x0
+    mov x10, #2
+
+    ld1 {v0.8h, v1.8h}, [x6], x1
+    ld1 {v2.8h, v3.8h}, [x6], x1
+    ld1 {v4.8h, v5.8h}, [x6], x1
+    ld1 {v6.8h, v7.8h}, [x6], x1
+    ld1 {v8.8h, v9.8h}, [x6], x1
+    ld1 {v10.8h, v11.8h}, [x6], x1
+    ld1 {v12.8h, v13.8h}, [x6], x1
+    ld1 {v14.8h, v15.8h}, [x6], x1
+
+    //transpose
+    zip1 v16.8h, v0.8h, v8.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v0.8h, v8.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v2.8h, v10.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v2.8h, v10.8h    //12 44 13 45
+    zip1 v20.8h, v4.8h, v12.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v4.8h, v12.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v6.8h, v14.8h    //24 56 25 57
+    zip2 v23.8h, v6.8h, v14.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v2.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v4.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v6.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v8.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v10.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v12.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v14.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v8.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v8.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v2.4s, v10.4s    //
+    zip2 v19.4s, v2.4s, v10.4s    //
+    zip1 v20.4s, v4.4s, v12.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v4.4s, v12.4s    //
+    zip1 v22.4s, v6.4s, v14.4s    //
+    zip2 v23.4s, v6.4s, v14.4s    //
+
+    sub x5, x5, #128
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+
+    zip1 v16.8h, v1.8h, v9.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v1.8h, v9.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v3.8h, v11.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v3.8h, v11.8h    //12 44 13 45
+    zip1 v20.8h, v5.8h, v13.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v5.8h, v13.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v7.8h, v15.8h    //24 56 25 57
+    zip2 v23.8h, v7.8h, v15.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v21.8h, v23.8h   //
+
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+
+    sub x5, x5, #192
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+
+    ld1 {v0.8h, v1.8h}, [x6], x1
+    ld1 {v2.8h, v3.8h}, [x6], x1
+    ld1 {v4.8h, v5.8h}, [x6], x1
+    ld1 {v6.8h, v7.8h}, [x6], x1
+    ld1 {v8.8h, v9.8h}, [x6], x1
+    ld1 {v10.8h, v11.8h}, [x6], x1
+    ld1 {v12.8h, v13.8h}, [x6], x1
+    ld1 {v14.8h, v15.8h}, [x6], x1
+    
+    //transpose
+    zip1 v16.8h, v0.8h, v8.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v0.8h, v8.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v2.8h, v10.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v2.8h, v10.8h    //12 44 13 45
+    zip1 v20.8h, v4.8h, v12.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v4.8h, v12.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v6.8h, v14.8h    //24 56 25 57
+    zip2 v23.8h, v6.8h, v14.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v2.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v4.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v6.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v8.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v10.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v12.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v14.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v8.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v8.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v2.4s, v10.4s    //
+    zip2 v19.4s, v2.4s, v10.4s    //
+    zip1 v20.4s, v4.4s, v12.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v4.4s, v12.4s    //
+    zip1 v22.4s, v6.4s, v14.4s    //
+    zip2 v23.4s, v6.4s, v14.4s    //
+    
+    sub x5, x5, #192
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+    
+    zip1 v16.8h, v1.8h, v9.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v1.8h, v9.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v3.8h, v11.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v3.8h, v11.8h    //12 44 13 45
+    zip1 v20.8h, v5.8h, v13.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v5.8h, v13.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v7.8h, v15.8h    //24 56 25 57
+    zip2 v23.8h, v7.8h, v15.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+    
+    sub x5, x5, #192
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+
+    sub x6, sp, #128
+    ld1 {v0.8h - v3.8h}, [x6], #64
+    ld1 {v4.8h - v7.8h}, [x6]
+    sub x6, sp, #256
+    ld1 {v8.8h - v11.8h}, [x6], #64
+    ld1 {v12.8h - v15.8h}, [x6]
+
+tx_dct2_pb16_loopx_s:
+    //e[0]-e[7]
+    saddl v16.4s, v0.4h, v15.4h
+    saddl v17.4s, v1.4h, v14.4h
+    saddl v18.4s, v2.4h, v13.4h
+    saddl v19.4s, v3.4h, v12.4h
+    saddl v20.4s, v4.4h, v11.4h
+    saddl v21.4s, v5.4h, v10.4h
+    saddl v22.4s, v6.4h, v9.4h
+    saddl v23.4s, v7.4h, v8.4h
+
+    saddl2 v24.4s, v0.8h, v15.8h
+    saddl2 v25.4s, v1.8h, v14.8h
+    saddl2 v26.4s, v2.8h, v13.8h
+    saddl2 v27.4s, v3.8h, v12.8h
+    saddl2 v28.4s, v4.8h, v11.8h
+    saddl2 v29.4s, v5.8h, v10.8h
+    saddl2 v30.4s, v6.8h, v9.8h
+    saddl2 v31.4s, v7.8h, v8.8h
+
+    //eo[0]-eo[3]
+    sub v0.4s, v16.4s, v23.4s
+    sub v1.4s, v17.4s, v22.4s
+    sub v2.4s, v18.4s, v21.4s
+    sub v3.4s, v19.4s, v20.4s
+    
+    sub v8.4s, v24.4s, v31.4s
+    sub v9.4s, v25.4s, v30.4s
+    sub v10.4s, v26.4s, v29.4s
+    sub v11.4s, v27.4s, v28.4s
+
+    //ee[0]-ee[3]
+    add v12.4s, v16.4s, v23.4s
+    add v13.4s, v17.4s, v22.4s
+    add v14.4s, v18.4s, v21.4s
+    add v15.4s, v19.4s, v20.4s
+
+    add v16.4s, v24.4s, v31.4s
+    add v17.4s, v25.4s, v30.4s
+    add v18.4s, v26.4s, v29.4s
+    add v19.4s, v27.4s, v28.4s
+
+    mov w6, #44
+    mov w7, #38
+    mov w8, #25
+    mov w9, #9
+    mov v4.s[0], w6
+    mov v4.s[1], w7
+    mov v4.s[2], w8
+    mov v4.s[3], w9
+
+    //dst[2], dst[6], dst[10], dst[14]
+    mul v20.4s, v0.4s, v4.s[0]
+    mla v20.4s, v1.4s, v4.s[1]
+    mla v20.4s, v2.4s, v4.s[2]
+    mla v20.4s, v3.4s, v4.s[3]
+
+    mul v21.4s, v0.4s, v4.s[1]
+    mls v21.4s, v1.4s, v4.s[3]
+    mls v21.4s, v2.4s, v4.s[0]
+    mls v21.4s, v3.4s, v4.s[2]
+
+    mul v22.4s, v0.4s, v4.s[2]
+    mls v22.4s, v1.4s, v4.s[0]
+    mla v22.4s, v2.4s, v4.s[3]
+    mla v22.4s, v3.4s, v4.s[1]
+
+    mul v23.4s, v0.4s, v4.s[3]
+    mls v23.4s, v1.4s, v4.s[2]
+    mla v23.4s, v2.4s, v4.s[1]
+    mls v23.4s, v3.4s, v4.s[0]
+
+    mul v24.4s, v8.4s, v4.s[0]
+    mla v24.4s, v9.4s, v4.s[1]
+    mla v24.4s, v10.4s, v4.s[2]
+    mla v24.4s, v11.4s, v4.s[3]
+    
+    mul v25.4s, v8.4s, v4.s[1]
+    mls v25.4s, v9.4s, v4.s[3]
+    mls v25.4s, v10.4s, v4.s[0]
+    mls v25.4s, v11.4s, v4.s[2]
+    
+    mul v26.4s, v8.4s, v4.s[2]
+    mls v26.4s, v9.4s, v4.s[0]
+    mla v26.4s, v10.4s, v4.s[3]
+    mla v26.4s, v11.4s, v4.s[1]
+    
+    mul v27.4s, v8.4s, v4.s[3]
+    mls v27.4s, v9.4s, v4.s[2]
+    mla v27.4s, v10.4s, v4.s[1]
+    mls v27.4s, v11.4s, v4.s[0]
+
+    sqrshrn v8.4h, v20.4s, #9
+    sqrshrn2 v8.8h, v24.4s, #9
+    sqrshrn v9.4h, v21.4s, #9
+    sqrshrn2 v9.8h, v25.4s, #9
+    sqrshrn v10.4h, v22.4s, #9
+    sqrshrn2 v10.8h, v26.4s, #9
+    sqrshrn v11.4h, v23.4s, #9
+    sqrshrn2 v11.8h, v27.4s, #9
+    
+    lsl x6, x3, #1  //2 * i_dst
+    lsl x7, x6, #1  //4 * i_dst
+    add x8, x2, x6
+    st1 {v8.8h}, [x8], x7
+    st1 {v9.8h}, [x8], x7
+    st1 {v10.8h}, [x8], x7
+    st1 {v11.8h}, [x8], x7
+
+    add v20.4s, v12.4s, v15.4s        //eee[0]
+    sub v21.4s, v12.4s, v15.4s        //eeo[0]
+    add v22.4s, v13.4s, v14.4s        //eee[1]
+    sub v23.4s, v13.4s, v14.4s        //eeo[1]
+
+    add v24.4s, v16.4s, v19.4s        //eee[0]
+    sub v25.4s, v16.4s, v19.4s        //eeo[0]
+    add v26.4s, v17.4s, v18.4s        //eee[1]
+    sub v27.4s, v17.4s, v18.4s        //eeo[1]
+
+    mov w6, #32
+    mov w7, #42
+    mov w8, #17
+    mov v4.s[0], w6
+    mov v4.s[1], w7
+    mov v4.s[2], w8
+
+    //dst[0], dst[4], dst[8], dst[12]
+    mul v16.4s, v20.4s, v4.s[0]
+    mla v16.4s, v22.4s, v4.s[0]
+
+    mul v18.4s, v21.4s, v4.s[1]
+    mla v18.4s, v23.4s, v4.s[2]
+
+    mul v20.4s, v20.4s, v4.s[0]
+    mls v20.4s, v22.4s, v4.s[0]
+
+    mul v22.4s, v21.4s, v4.s[2]
+    mls v22.4s, v23.4s, v4.s[1]
+
+    mul v17.4s, v24.4s, v4.s[0]
+    mla v17.4s, v26.4s, v4.s[0]
+    
+    mul v19.4s, v25.4s, v4.s[1]
+    mla v19.4s, v27.4s, v4.s[2]
+    
+    mul v21.4s, v24.4s, v4.s[0]
+    mls v21.4s, v26.4s, v4.s[0]
+    
+    mul v23.4s, v25.4s, v4.s[2]
+    mls v23.4s, v27.4s, v4.s[1]
+
+    sqrshrn v8.4h, v16.4s, #9
+    sqrshrn2 v8.8h, v17.4s, #9
+    sqrshrn v9.4h, v18.4s, #9
+    sqrshrn2 v9.8h, v19.4s, #9
+    sqrshrn v10.4h, v20.4s, #9
+    sqrshrn2 v10.8h, v21.4s, #9
+    sqrshrn v11.4h, v22.4s, #9
+    sqrshrn2 v11.8h, v23.4s, #9
+    
+    lsl x6, x3, #2  //4 * i_dst
+    mov x8, x2
+    st1 {v8.8h}, [x8], x6
+    st1 {v9.8h}, [x8], x6
+    st1 {v10.8h}, [x8], x6
+    st1 {v11.8h}, [x8], x6
+
+    cmp x10, #1
+    beq tx_dct2_pb16_load
+    sub x6, sp, #128
+    ld1 {v0.8h - v3.8h}, [x6], #64
+    ld1 {v4.8h - v7.8h}, [x6]
+    sub x6, sp, #256
+    ld1 {v8.8h - v11.8h}, [x6], #64
+    ld1 {v12.8h - v15.8h}, [x6]
+    b tx_dct2_pb16_load_end
+
+tx_dct2_pb16_load:
+    sub x6, sp, #384
+    ld1 {v0.8h - v3.8h}, [x6], #64
+    ld1 {v4.8h - v7.8h}, [x6]
+    sub x6, sp, #512
+    ld1 {v8.8h - v11.8h}, [x6], #64
+    ld1 {v12.8h - v15.8h}, [x6]
+
+tx_dct2_pb16_load_end:
+    //o[0]-o[7]
+    ssubl v16.4s, v0.4h, v15.4h
+    ssubl v18.4s, v1.4h, v14.4h
+    ssubl v20.4s, v2.4h, v13.4h
+    ssubl v22.4s, v3.4h, v12.4h
+    ssubl v24.4s, v4.4h, v11.4h
+    ssubl v26.4s, v5.4h, v10.4h
+    ssubl v28.4s, v6.4h, v9.4h
+    ssubl v30.4s, v7.4h, v8.4h
+
+    ssubl2 v17.4s, v0.8h, v15.8h
+    ssubl2 v19.4s, v1.8h, v14.8h
+    ssubl2 v21.4s, v2.8h, v13.8h
+    ssubl2 v23.4s, v3.8h, v12.8h
+    ssubl2 v25.4s, v4.8h, v11.8h
+    ssubl2 v27.4s, v5.8h, v10.8h
+    ssubl2 v29.4s, v6.8h, v9.8h
+    ssubl2 v31.4s, v7.8h, v8.8h
+
+    mov w6, #45
+    mov w7, #43
+    mov w8, #40
+    mov w9, #35
+    mov v4.s[0], w6
+    mov v4.s[1], w7
+    mov v4.s[2], w8
+    mov v4.s[3], w9
+    mov w6, #29
+    mov w7, #21
+    mov w8, #13
+    mov w9, #4
+    mov v5.s[0], w6
+    mov v5.s[1], w7
+    mov v5.s[2], w8
+    mov v5.s[3], w9
+
+    //dst[1], dst[3], dst[5], dst[7], dst[9], dst[11], dst[13], dst[15]
+    mul v0.4s, v16.4s, v4.s[0]
+    mul v1.4s, v17.4s, v4.s[0]
+    mla v0.4s, v18.4s, v4.s[1]
+    mla v1.4s, v19.4s, v4.s[1]
+    mla v0.4s, v20.4s, v4.s[2]
+    mla v1.4s, v21.4s, v4.s[2]
+    mla v0.4s, v22.4s, v4.s[3]
+    mla v1.4s, v23.4s, v4.s[3]
+    mla v0.4s, v24.4s, v5.s[0]
+    mla v1.4s, v25.4s, v5.s[0]
+    mla v0.4s, v26.4s, v5.s[1]
+    mla v1.4s, v27.4s, v5.s[1]
+    mla v0.4s, v28.4s, v5.s[2]
+    mla v1.4s, v29.4s, v5.s[2]
+    mla v0.4s, v30.4s, v5.s[3]
+    mla v1.4s, v31.4s, v5.s[3]
+
+    mul v2.4s, v16.4s, v4.s[1]
+    mul v3.4s, v17.4s, v4.s[1]
+    mla v2.4s, v18.4s, v5.s[0]
+    mla v3.4s, v19.4s, v5.s[0]
+    mla v2.4s, v20.4s, v5.s[3]
+    mla v3.4s, v21.4s, v5.s[3]
+    mls v2.4s, v22.4s, v5.s[1]
+    mls v3.4s, v23.4s, v5.s[1]
+    mls v2.4s, v24.4s, v4.s[2]
+    mls v3.4s, v25.4s, v4.s[2]
+    mls v2.4s, v26.4s, v4.s[0]
+    mls v3.4s, v27.4s, v4.s[0]
+    mls v2.4s, v28.4s, v4.s[3]
+    mls v3.4s, v29.4s, v4.s[3]
+    mls v2.4s, v30.4s, v5.s[2]
+    mls v3.4s, v31.4s, v5.s[2]
+
+    mul v6.4s, v16.4s, v4.s[2]
+    mul v7.4s, v17.4s, v4.s[2]
+    mla v6.4s, v18.4s, v5.s[3]
+    mla v7.4s, v19.4s, v5.s[3]
+    mls v6.4s, v20.4s, v4.s[3]
+    mls v7.4s, v21.4s, v4.s[3]
+    mls v6.4s, v22.4s, v4.s[1]
+    mls v7.4s, v23.4s, v4.s[1]
+    mls v6.4s, v24.4s, v5.s[2]
+    mls v7.4s, v25.4s, v5.s[2]
+    mla v6.4s, v26.4s, v5.s[0]
+    mla v7.4s, v27.4s, v5.s[0]
+    mla v6.4s, v28.4s, v4.s[0]
+    mla v7.4s, v29.4s, v4.s[0]
+    mla v6.4s, v30.4s, v5.s[1]
+    mla v7.4s, v31.4s, v5.s[1]
+
+    mul v8.4s, v16.4s, v4.s[3]
+    mul v9.4s, v17.4s, v4.s[3]
+    mls v8.4s, v18.4s, v5.s[1]
+    mls v9.4s, v19.4s, v5.s[1]
+    mls v8.4s, v20.4s, v4.s[1]
+    mls v9.4s, v21.4s, v4.s[1]
+    mla v8.4s, v22.4s, v5.s[3]
+    mla v9.4s, v23.4s, v5.s[3]
+    mla v8.4s, v24.4s, v4.s[0]
+    mla v9.4s, v25.4s, v4.s[0]
+    mla v8.4s, v26.4s, v5.s[2]
+    mla v9.4s, v27.4s, v5.s[2]
+    mls v8.4s, v28.4s, v4.s[2]
+    mls v9.4s, v29.4s, v4.s[2]
+    mls v8.4s, v30.4s, v5.s[0]
+    mls v9.4s, v31.4s, v5.s[0]
+
+    mul v10.4s, v16.4s, v5.s[0]
+    mul v11.4s, v17.4s, v5.s[0]
+    mls v10.4s, v18.4s, v4.s[2]
+    mls v11.4s, v19.4s, v4.s[2]
+    mls v10.4s, v20.4s, v5.s[2]
+    mls v11.4s, v21.4s, v5.s[2]
+    mla v10.4s, v22.4s, v4.s[0]
+    mla v11.4s, v23.4s, v4.s[0]
+    mls v10.4s, v24.4s, v5.s[3]
+    mls v11.4s, v25.4s, v5.s[3]
+    mls v10.4s, v26.4s, v4.s[1]
+    mls v11.4s, v27.4s, v4.s[1]
+    mla v10.4s, v28.4s, v5.s[1]
+    mla v11.4s, v29.4s, v5.s[1]
+    mla v10.4s, v30.4s, v4.s[3]
+    mla v11.4s, v31.4s, v4.s[3]
+    
+    mul v12.4s, v16.4s, v5.s[1]
+    mul v13.4s, v17.4s, v5.s[1]
+    mls v12.4s, v18.4s, v4.s[0]
+    mls v13.4s, v19.4s, v4.s[0]
+    mla v12.4s, v20.4s, v5.s[0]
+    mla v13.4s, v21.4s, v5.s[0]
+    mla v12.4s, v22.4s, v5.s[2]
+    mla v13.4s, v23.4s, v5.s[2]
+    mls v12.4s, v24.4s, v4.s[1]
+    mls v13.4s, v25.4s, v4.s[1]
+    mla v12.4s, v26.4s, v4.s[3]
+    mla v13.4s, v27.4s, v4.s[3]
+    mla v12.4s, v28.4s, v5.s[3]
+    mla v13.4s, v29.4s, v5.s[3]
+    mls v12.4s, v30.4s, v4.s[2]
+    mls v13.4s, v31.4s, v4.s[2]
+
+    mul v14.4s, v16.4s, v5.s[2]
+    mul v15.4s, v17.4s, v5.s[2]
+    mls v14.4s, v18.4s, v4.s[3]
+    mls v15.4s, v19.4s, v4.s[3]
+    mla v14.4s, v20.4s, v4.s[0]
+    mla v15.4s, v21.4s, v4.s[0]
+    mls v14.4s, v22.4s, v4.s[2]
+    mls v15.4s, v23.4s, v4.s[2]
+    mla v14.4s, v24.4s, v5.s[1]
+    mla v15.4s, v25.4s, v5.s[1]
+    mla v14.4s, v26.4s, v5.s[3]
+    mla v15.4s, v27.4s, v5.s[3]
+    mls v14.4s, v28.4s, v5.s[0]
+    mls v15.4s, v29.4s, v5.s[0]
+    mla v14.4s, v30.4s, v4.s[1]
+    mla v15.4s, v31.4s, v4.s[1]
+
+    mul v16.4s, v16.4s, v5.s[3]
+    mul v17.4s, v17.4s, v5.s[3]
+    mls v16.4s, v18.4s, v5.s[2]
+    mls v17.4s, v19.4s, v5.s[2]
+    mla v16.4s, v20.4s, v5.s[1]
+    mla v17.4s, v21.4s, v5.s[1]
+    mls v16.4s, v22.4s, v5.s[0]
+    mls v17.4s, v23.4s, v5.s[0]
+    mla v16.4s, v24.4s, v4.s[3]
+    mla v17.4s, v25.4s, v4.s[3]
+    mls v16.4s, v26.4s, v4.s[2]
+    mls v17.4s, v27.4s, v4.s[2]
+    mla v16.4s, v28.4s, v4.s[1]
+    mla v17.4s, v29.4s, v4.s[1]
+    mls v16.4s, v30.4s, v4.s[0]
+    mls v17.4s, v31.4s, v4.s[0]
+
+    sqrshrn v0.4h, v0.4s, #9
+    sqrshrn2 v0.8h, v1.4s, #9
+    sqrshrn v1.4h, v2.4s, #9
+    sqrshrn2 v1.8h, v3.4s, #9
+    sqrshrn v2.4h, v6.4s, #9
+    sqrshrn2 v2.8h, v7.4s, #9
+    sqrshrn v3.4h, v8.4s, #9
+    sqrshrn2 v3.8h, v9.4s, #9
+    sqrshrn v4.4h, v10.4s, #9
+    sqrshrn2 v4.8h, v11.4s, #9
+    sqrshrn v5.4h, v12.4s, #9
+    sqrshrn2 v5.8h, v13.4s, #9
+    sqrshrn v6.4h, v14.4s, #9
+    sqrshrn2 v6.8h, v15.4s, #9
+    sqrshrn v7.4h, v16.4s, #9
+    sqrshrn2 v7.8h, v17.4s, #9
+
+    lsl x6, x3, #1  //2 * i_dst
+    add x8, x2, x3
+    st1 {v0.8h}, [x8], x6
+    st1 {v1.8h}, [x8], x6
+    st1 {v2.8h}, [x8], x6
+    st1 {v3.8h}, [x8], x6
+    st1 {v4.8h}, [x8], x6
+    st1 {v5.8h}, [x8], x6
+    st1 {v6.8h}, [x8], x6
+    st1 {v7.8h}, [x8], x6
+
+    sub x6, sp, #384
+    ld1 {v0.8h - v3.8h}, [x6], #64
+    ld1 {v4.8h - v7.8h}, [x6]
+    sub x6, sp, #512
+    ld1 {v8.8h - v11.8h}, [x6], #64
+    ld1 {v12.8h - v15.8h}, [x6]
+
+    add x2, x2, #16
+    subs x10, x10, #1
+    bgt tx_dct2_pb16_loopx_s
+
+    ld1 {v12.8h - v15.8h}, [sp], #64
+    ld1 {v8.8h - v11.8h}, [sp], #64
+ret
 
 tx_dct2_pb16_coef:
 .hword 32, 45, 44, 43, 42, 40, 38, 35, 32, 29, 25, 21, 17, 13, 9, 4, \
@@ -441,6 +1971,1478 @@ tx_dct2_pb16_end:
     bgt tx_dct2_pb16_loopk
 
     ret
+
+//*************************************************************************************************
+//void partialButterfly32x32_arm64_s(coef_t *src, int i_src, coef_t *dst, int i_dst, int shift);
+//x0: src, 16 bit
+//x1: i_src
+//x2: dst
+//x3: i_dst
+//x4: shift
+//*************************************************************************************************
+function partialButterfly32x32_arm64_s
+
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+    
+    lsl x1, x1, #1
+    lsl x3, x3, #1
+    
+    //transpose
+    sub x5, sp, #128
+    mov x7, #4      //i
+    mov x8, #4      //j
+
+tx_dct2_pb32_transpose_loopj:
+    mov x6, x0
+
+tx_dct2_pb32_transpose_loopi:
+    ld1 {v0.8h}, [x6], x1
+    ld1 {v1.8h}, [x6], x1
+    ld1 {v2.8h}, [x6], x1
+    ld1 {v3.8h}, [x6], x1
+    ld1 {v4.8h}, [x6], x1
+    ld1 {v5.8h}, [x6], x1
+    ld1 {v6.8h}, [x6], x1
+    ld1 {v7.8h}, [x6], x1
+    
+    //transpose
+    zip1 v16.8h, v0.8h, v4.8h    //0 32 1 33 2 34 3 35
+    zip2 v17.8h, v0.8h, v4.8h    //4 36 5 37 6 38 7 39
+    zip1 v18.8h, v1.8h, v5.8h    //8 40 9 41 10 42 11 43
+    zip2 v19.8h, v1.8h, v5.8h    //12 44 13 45
+    zip1 v20.8h, v2.8h, v6.8h    //16 48 17 49 18 50 19 51
+    zip2 v21.8h, v2.8h, v6.8h    //20 52 21 53 22 54 23 55
+    zip1 v22.8h, v3.8h, v7.8h    //24 56 25 57
+    zip2 v23.8h, v3.8h, v7.8h    //28 60 29 61 30 62 31 63
+    
+    zip1 v0.8h, v16.8h, v18.8h   //0 8 32 40 1 9 33 41
+    zip2 v1.8h, v16.8h, v18.8h   //2 10 34 42 3 11 35 43
+    zip1 v2.8h, v17.8h, v19.8h   //4 12 36 44 5 13 37 45
+    zip2 v3.8h, v17.8h, v19.8h   //6 14 38 46 7 15 39 47
+    zip1 v4.8h, v20.8h, v22.8h   //16 24 48 56 17 25 49 57
+    zip2 v5.8h, v20.8h, v22.8h   //18 26 50 58 19 27 51 59
+    zip1 v6.8h, v21.8h, v23.8h   //20 28 52 60 21 29 53 61
+    zip2 v7.8h, v21.8h, v23.8h   //
+    
+    zip1 v16.4s, v0.4s, v4.4s    //0 8 16 24 32 40 48 56
+    zip2 v17.4s, v0.4s, v4.4s    //1 9 17 25 33 41 49 57
+    zip1 v18.4s, v1.4s, v5.4s    //
+    zip2 v19.4s, v1.4s, v5.4s    //
+    zip1 v20.4s, v2.4s, v6.4s    //4 12 20 28 36 44 52 60
+    zip2 v21.4s, v2.4s, v6.4s    //
+    zip1 v22.4s, v3.4s, v7.4s    //
+    zip2 v23.4s, v3.4s, v7.4s    //
+
+    st1 {v16.8h - v19.8h}, [x5]
+    add x5, x5, #64
+    st1 {v20.8h - v23.8h}, [x5]
+    sub x5, x5, #192
+
+    sub x6, x6, #496
+
+    subs x7, x7, #1
+    bgt tx_dct2_pb32_transpose_loopi
+
+    mov x7, #4      //i
+    add x0, x0, #512
+    subs x8, x8, #1
+    bgt tx_dct2_pb32_transpose_loopj
+    
+    //dst[2] dst[6] dst[10] dst[14] dst[18] dst[22] dst[26] dst[30]
+    sub x5, sp, #128
+    sub x6, sp, #2176
+    lsl x12, x3, #1      //2 * i_dst
+    lsl x13, x12, #1      //4 * i_dst
+    mov x11 ,x2
+    mov x14, #4          //loop
+
+tx_dct2_pb32_dst1_loop:
+
+    ld1 {v0.8h - v3.8h}, [x5], #64
+    ld1 {v4.8h - v7.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v8.8h - v11.8h}, [x5], #64
+    ld1 {v12.8h - v15.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v16.8h - v19.8h}, [x5], #64
+    ld1 {v20.8h - v23.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v24.8h - v27.8h}, [x5], #64
+    ld1 {v28.8h - v31.8h}, [x5]
+
+    //e[0]-e[15]
+    saddl v0.4s, v0.4h, v31.4h
+    saddl v1.4s, v1.4h, v30.4h
+    saddl v2.4s, v2.4h, v29.4h
+    saddl v3.4s, v3.4h, v28.4h
+    saddl v4.4s, v4.4h, v27.4h
+    saddl v5.4s, v5.4h, v26.4h
+    saddl v6.4s, v6.4h, v25.4h
+    saddl v7.4s, v7.4h, v24.4h
+    saddl v8.4s, v8.4h, v23.4h
+    saddl v9.4s, v9.4h, v22.4h
+    saddl v10.4s, v10.4h, v21.4h
+    saddl v11.4s, v11.4h, v20.4h
+    saddl v12.4s, v12.4h, v19.4h
+    saddl v13.4s, v13.4h, v18.4h
+    saddl v14.4s, v14.4h, v17.4h
+    saddl v15.4s, v15.4h, v16.4h
+
+    //ee[0]-ee[7]
+    add v16.4s, v0.4s, v15.4s
+    add v17.4s, v1.4s, v14.4s
+    add v18.4s, v2.4s, v13.4s
+    add v19.4s, v3.4s, v12.4s
+    add v20.4s, v4.4s, v11.4s
+    add v21.4s, v5.4s, v10.4s
+    add v22.4s, v6.4s, v9.4s
+    add v23.4s, v7.4s, v8.4s
+
+    st1 {v16.4s - v19.4s}, [x6], #64
+    st1 {v20.4s - v23.4s}, [x6]
+
+    //eo[0]-eo[7]
+    sub v16.4s, v0.4s, v15.4s
+    sub v17.4s, v1.4s, v14.4s
+    sub v18.4s, v2.4s, v13.4s
+    sub v19.4s, v3.4s, v12.4s
+    sub v20.4s, v4.4s, v11.4s
+    sub v21.4s, v5.4s, v10.4s
+    sub v22.4s, v6.4s, v9.4s
+    sub v23.4s, v7.4s, v8.4s
+    
+    mov w7, #45
+    mov w8, #43
+    mov w9, #40
+    mov w10, #35
+    mov v30.s[0], w7
+    mov v30.s[1], w8
+    mov v30.s[2], w9
+    mov v30.s[3], w10
+    mov w7, #29
+    mov w8, #21
+    mov w9, #13
+    mov w10, #4
+    mov v31.s[0], w7
+    mov v31.s[1], w8
+    mov v31.s[2], w9
+    mov v31.s[3], w10
+
+    mul v0.4s, v16.4s, v30.s[0]
+    mla v0.4s, v17.4s, v30.s[1]
+    mla v0.4s, v18.4s, v30.s[2]
+    mla v0.4s, v19.4s, v30.s[3]
+    mla v0.4s, v20.4s, v31.s[0]
+    mla v0.4s, v21.4s, v31.s[1]
+    mla v0.4s, v22.4s, v31.s[2]
+    mla v0.4s, v23.4s, v31.s[3]
+
+    mul v1.4s, v16.4s, v30.s[1]
+    mla v1.4s, v17.4s, v31.s[0]
+    mla v1.4s, v18.4s, v31.s[3]
+    mls v1.4s, v19.4s, v31.s[1]
+    mls v1.4s, v20.4s, v30.s[2]
+    mls v1.4s, v21.4s, v30.s[0]
+    mls v1.4s, v22.4s, v30.s[3]
+    mls v1.4s, v23.4s, v31.s[2]
+
+    mul v2.4s, v16.4s, v30.s[2]
+    mla v2.4s, v17.4s, v31.s[3]
+    mls v2.4s, v18.4s, v30.s[3]
+    mls v2.4s, v19.4s, v30.s[1]
+    mls v2.4s, v20.4s, v31.s[2]
+    mla v2.4s, v21.4s, v31.s[0]
+    mla v2.4s, v22.4s, v30.s[0]
+    mla v2.4s, v23.4s, v31.s[1]
+
+    mul v3.4s, v16.4s, v30.s[3]
+    mls v3.4s, v17.4s, v31.s[1]
+    mls v3.4s, v18.4s, v30.s[1]
+    mla v3.4s, v19.4s, v31.s[3]
+    mla v3.4s, v20.4s, v30.s[0]
+    mla v3.4s, v21.4s, v31.s[2]
+    mls v3.4s, v22.4s, v30.s[2]
+    mls v3.4s, v23.4s, v31.s[0]
+
+    mul v4.4s, v16.4s, v31.s[0]
+    mls v4.4s, v17.4s, v30.s[2]
+    mls v4.4s, v18.4s, v31.s[2]
+    mla v4.4s, v19.4s, v30.s[0]
+    mls v4.4s, v20.4s, v31.s[3]
+    mls v4.4s, v21.4s, v30.s[1]
+    mla v4.4s, v22.4s, v31.s[1]
+    mla v4.4s, v23.4s, v30.s[3]
+    
+    mul v5.4s, v16.4s, v31.s[1]
+    mls v5.4s, v17.4s, v30.s[0]
+    mla v5.4s, v18.4s, v31.s[0]
+    mla v5.4s, v19.4s, v31.s[2]
+    mls v5.4s, v20.4s, v30.s[1]
+    mla v5.4s, v21.4s, v30.s[3]
+    mla v5.4s, v22.4s, v31.s[3]
+    mls v5.4s, v23.4s, v30.s[2]
+
+    mul v6.4s, v16.4s, v31.s[2]
+    mls v6.4s, v17.4s, v30.s[3]
+    mla v6.4s, v18.4s, v30.s[0]
+    mls v6.4s, v19.4s, v30.s[2]
+    mla v6.4s, v20.4s, v31.s[1]
+    mla v6.4s, v21.4s, v31.s[3]
+    mls v6.4s, v22.4s, v31.s[0]
+    mla v6.4s, v23.4s, v30.s[1]
+
+    mul v7.4s, v16.4s, v31.s[3]
+    mls v7.4s, v17.4s, v31.s[2]
+    mla v7.4s, v18.4s, v31.s[1]
+    mls v7.4s, v19.4s, v31.s[0]
+    mla v7.4s, v20.4s, v30.s[3]
+    mls v7.4s, v21.4s, v30.s[2]
+    mla v7.4s, v22.4s, v30.s[1]
+    mls v7.4s, v23.4s, v30.s[0]
+    
+    cmp w4, #5
+    bgt tx_dct2_pb32_shift1
+    blt tx_dct2_pb32_shift2
+
+    sqrshrn v0.4h, v0.4s, #5
+    sqrshrn v1.4h, v1.4s, #5
+    sqrshrn v2.4h, v2.4s, #5
+    sqrshrn v3.4h, v3.4s, #5
+    sqrshrn v4.4h, v4.4s, #5
+    sqrshrn v5.4h, v5.4s, #5
+    sqrshrn v6.4h, v6.4s, #5
+    sqrshrn v7.4h, v7.4s, #5
+    b tx_dct2_pb32_shift_end1
+
+tx_dct2_pb32_shift1:
+    sqrshrn v0.4h, v0.4s, #10
+    sqrshrn v1.4h, v1.4s, #10
+    sqrshrn v2.4h, v2.4s, #10
+    sqrshrn v3.4h, v3.4s, #10
+    sqrshrn v4.4h, v4.4s, #10
+    sqrshrn v5.4h, v5.4s, #10
+    sqrshrn v6.4h, v6.4s, #10
+    sqrshrn v7.4h, v7.4s, #10
+    b tx_dct2_pb32_shift_end1
+
+tx_dct2_pb32_shift2:
+    sqrshrn v0.4h, v0.4s, #3
+    sqrshrn v1.4h, v1.4s, #3
+    sqrshrn v2.4h, v2.4s, #3
+    sqrshrn v3.4h, v3.4s, #3
+    sqrshrn v4.4h, v4.4s, #3
+    sqrshrn v5.4h, v5.4s, #3
+    sqrshrn v6.4h, v6.4s, #3
+    sqrshrn v7.4h, v7.4s, #3
+
+tx_dct2_pb32_shift_end1:
+    add x15, x11, x12
+    st1 {v0.d}[0], [x15], x13
+    st1 {v1.d}[0], [x15], x13
+    st1 {v2.d}[0], [x15], x13
+    st1 {v3.d}[0], [x15], x13
+    st1 {v4.d}[0], [x15], x13
+    st1 {v5.d}[0], [x15], x13
+    st1 {v6.d}[0], [x15], x13
+    st1 {v7.d}[0], [x15], x13
+
+    add x5, x5, #320
+    ld1 {v0.8h - v3.8h}, [x5], #64
+    ld1 {v4.8h - v7.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v8.8h - v11.8h}, [x5], #64
+    ld1 {v12.8h - v15.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v16.8h - v19.8h}, [x5], #64
+    ld1 {v20.8h - v23.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v24.8h - v27.8h}, [x5], #64
+    ld1 {v28.8h - v31.8h}, [x5]
+    
+    //e[0]-e[15]
+    saddl2 v0.4s, v0.8h, v31.8h
+    saddl2 v1.4s, v1.8h, v30.8h
+    saddl2 v2.4s, v2.8h, v29.8h
+    saddl2 v3.4s, v3.8h, v28.8h
+    saddl2 v4.4s, v4.8h, v27.8h
+    saddl2 v5.4s, v5.8h, v26.8h
+    saddl2 v6.4s, v6.8h, v25.8h
+    saddl2 v7.4s, v7.8h, v24.8h
+    saddl2 v8.4s, v8.8h, v23.8h
+    saddl2 v9.4s, v9.8h, v22.8h
+    saddl2 v10.4s, v10.8h, v21.8h
+    saddl2 v11.4s, v11.8h, v20.8h
+    saddl2 v12.4s, v12.8h, v19.8h
+    saddl2 v13.4s, v13.8h, v18.8h
+    saddl2 v14.4s, v14.8h, v17.8h
+    saddl2 v15.4s, v15.8h, v16.8h
+    
+    //ee[0]-ee[7]
+    add v16.4s, v0.4s, v15.4s
+    add v17.4s, v1.4s, v14.4s
+    add v18.4s, v2.4s, v13.4s
+    add v19.4s, v3.4s, v12.4s
+    add v20.4s, v4.4s, v11.4s
+    add v21.4s, v5.4s, v10.4s
+    add v22.4s, v6.4s, v9.4s
+    add v23.4s, v7.4s, v8.4s
+    
+    sub x6, x6, #192
+    st1 {v16.4s - v19.4s}, [x6], #64
+    st1 {v20.4s - v23.4s}, [x6]
+    
+    //eo[0]-eo[7]
+    sub v16.4s, v0.4s, v15.4s
+    sub v17.4s, v1.4s, v14.4s
+    sub v18.4s, v2.4s, v13.4s
+    sub v19.4s, v3.4s, v12.4s
+    sub v20.4s, v4.4s, v11.4s
+    sub v21.4s, v5.4s, v10.4s
+    sub v22.4s, v6.4s, v9.4s
+    sub v23.4s, v7.4s, v8.4s
+    
+    mov w7, #45
+    mov w8, #43
+    mov w9, #40
+    mov w10, #35
+    mov v30.s[0], w7
+    mov v30.s[1], w8
+    mov v30.s[2], w9
+    mov v30.s[3], w10
+    mov w7, #29
+    mov w8, #21
+    mov w9, #13
+    mov w10, #4
+    mov v31.s[0], w7
+    mov v31.s[1], w8
+    mov v31.s[2], w9
+    mov v31.s[3], w10
+    
+    mul v0.4s, v16.4s, v30.s[0]
+    mla v0.4s, v17.4s, v30.s[1]
+    mla v0.4s, v18.4s, v30.s[2]
+    mla v0.4s, v19.4s, v30.s[3]
+    mla v0.4s, v20.4s, v31.s[0]
+    mla v0.4s, v21.4s, v31.s[1]
+    mla v0.4s, v22.4s, v31.s[2]
+    mla v0.4s, v23.4s, v31.s[3]     //dst[2]
+    
+    mul v1.4s, v16.4s, v30.s[1]
+    mla v1.4s, v17.4s, v31.s[0]
+    mla v1.4s, v18.4s, v31.s[3]
+    mls v1.4s, v19.4s, v31.s[1]
+    mls v1.4s, v20.4s, v30.s[2]
+    mls v1.4s, v21.4s, v30.s[0]
+    mls v1.4s, v22.4s, v30.s[3]
+    mls v1.4s, v23.4s, v31.s[2]     //dst[6]
+    
+    mul v2.4s, v16.4s, v30.s[2]
+    mla v2.4s, v17.4s, v31.s[3]
+    mls v2.4s, v18.4s, v30.s[3]
+    mls v2.4s, v19.4s, v30.s[1]
+    mls v2.4s, v20.4s, v31.s[2]
+    mla v2.4s, v21.4s, v31.s[0]
+    mla v2.4s, v22.4s, v30.s[0]
+    mla v2.4s, v23.4s, v31.s[1]     //dst[10]
+    
+    mul v3.4s, v16.4s, v30.s[3]
+    mls v3.4s, v17.4s, v31.s[1]
+    mls v3.4s, v18.4s, v30.s[1]
+    mla v3.4s, v19.4s, v31.s[3]
+    mla v3.4s, v20.4s, v30.s[0]
+    mla v3.4s, v21.4s, v31.s[2]
+    mls v3.4s, v22.4s, v30.s[2]
+    mls v3.4s, v23.4s, v31.s[0]     //dst[14]
+    
+    mul v4.4s, v16.4s, v31.s[0]
+    mls v4.4s, v17.4s, v30.s[2]
+    mls v4.4s, v18.4s, v31.s[2]
+    mla v4.4s, v19.4s, v30.s[0]
+    mls v4.4s, v20.4s, v31.s[3]
+    mls v4.4s, v21.4s, v30.s[1]
+    mla v4.4s, v22.4s, v31.s[1]
+    mla v4.4s, v23.4s, v30.s[3]     //dst[18]
+    
+    mul v5.4s, v16.4s, v31.s[1]
+    mls v5.4s, v17.4s, v30.s[0]
+    mla v5.4s, v18.4s, v31.s[0]
+    mla v5.4s, v19.4s, v31.s[2]
+    mls v5.4s, v20.4s, v30.s[1]
+    mla v5.4s, v21.4s, v30.s[3]
+    mla v5.4s, v22.4s, v31.s[3]
+    mls v5.4s, v23.4s, v30.s[2]     //dst[22]
+    
+    mul v6.4s, v16.4s, v31.s[2]
+    mls v6.4s, v17.4s, v30.s[3]
+    mla v6.4s, v18.4s, v30.s[0]
+    mls v6.4s, v19.4s, v30.s[2]
+    mla v6.4s, v20.4s, v31.s[1]
+    mla v6.4s, v21.4s, v31.s[3]
+    mls v6.4s, v22.4s, v31.s[0]
+    mla v6.4s, v23.4s, v30.s[1]     //dst[26]
+    
+    mul v7.4s, v16.4s, v31.s[3]
+    mls v7.4s, v17.4s, v31.s[2]
+    mla v7.4s, v18.4s, v31.s[1]
+    mls v7.4s, v19.4s, v31.s[0]
+    mla v7.4s, v20.4s, v30.s[3]
+    mls v7.4s, v21.4s, v30.s[2]
+    mla v7.4s, v22.4s, v30.s[1]
+    mls v7.4s, v23.4s, v30.s[0]     //dst[30]
+    
+    cmp w4, #5
+    bgt tx_dct2_pb32_shift3
+    blt tx_dct2_pb32_shift4
+    
+    sqrshrn v0.4h, v0.4s, #5
+    sqrshrn v1.4h, v1.4s, #5
+    sqrshrn v2.4h, v2.4s, #5
+    sqrshrn v3.4h, v3.4s, #5
+    sqrshrn v4.4h, v4.4s, #5
+    sqrshrn v5.4h, v5.4s, #5
+    sqrshrn v6.4h, v6.4s, #5
+    sqrshrn v7.4h, v7.4s, #5
+    b tx_dct2_pb32_shift_end2
+    
+    tx_dct2_pb32_shift3:
+    sqrshrn v0.4h, v0.4s, #10
+    sqrshrn v1.4h, v1.4s, #10
+    sqrshrn v2.4h, v2.4s, #10
+    sqrshrn v3.4h, v3.4s, #10
+    sqrshrn v4.4h, v4.4s, #10
+    sqrshrn v5.4h, v5.4s, #10
+    sqrshrn v6.4h, v6.4s, #10
+    sqrshrn v7.4h, v7.4s, #10
+    b tx_dct2_pb32_shift_end2
+    
+    tx_dct2_pb32_shift4:
+    sqrshrn v0.4h, v0.4s, #3
+    sqrshrn v1.4h, v1.4s, #3
+    sqrshrn v2.4h, v2.4s, #3
+    sqrshrn v3.4h, v3.4s, #3
+    sqrshrn v4.4h, v4.4s, #3
+    sqrshrn v5.4h, v5.4s, #3
+    sqrshrn v6.4h, v6.4s, #3
+    sqrshrn v7.4h, v7.4s, #3
+    
+tx_dct2_pb32_shift_end2:
+    
+    add x15, x11, #8
+    add x15, x15, x12
+    st1 {v0.d}[0], [x15], x13
+    st1 {v1.d}[0], [x15], x13
+    st1 {v2.d}[0], [x15], x13
+    st1 {v3.d}[0], [x15], x13
+    st1 {v4.d}[0], [x15], x13
+    st1 {v5.d}[0], [x15], x13
+    st1 {v6.d}[0], [x15], x13
+    st1 {v7.d}[0], [x15], x13
+
+    sub x5, x5, #192
+    sub x6, x6, #192
+    add x11, x11, #16
+    subs x14, x14, #1
+    bgt tx_dct2_pb32_dst1_loop
+
+    //dst[0] dst[4] dst[8] dst[12] dst[16] dst[20] dst[24] dst[28]
+    mov w7, #44
+    mov w8, #38
+    mov w9, #25
+    mov w10, #9
+    mov v30.s[0], w7
+    mov v30.s[1], w8
+    mov v30.s[2], w9
+    mov v30.s[3], w10
+    mov w7, #32
+    mov w8, #42
+    mov w9, #17
+    mov v31.s[0], w7
+    mov v31.s[1], w8
+    mov v31.s[2], w9
+    
+    sub x6, sp, #2176
+    lsl x12, x3, #1      //2 * i_dst
+    lsl x13, x12, #1      //4 * i_dst
+    mov x11 ,x2
+    mov x14, #8          //loop
+
+tx_dct2_pb32_dst2_loop:
+    ld1 {v0.4s - v3.4s}, [x6], #64
+    ld1 {v4.4s - v7.4s}, [x6]
+
+    //eeo[0]-eeo[3]
+    sub v8.4s, v0.4s, v7.4s
+    sub v9.4s, v1.4s, v6.4s
+    sub v10.4s, v2.4s, v5.4s
+    sub v11.4s, v3.4s, v4.4s
+    
+    //eee[0]-eee[3]
+    add v12.4s, v0.4s, v7.4s
+    add v13.4s, v1.4s, v6.4s
+    add v14.4s, v2.4s, v5.4s
+    add v15.4s, v3.4s, v4.4s
+    
+    add v16.4s, v12.4s, v15.4s  //eeee[0]
+    sub v17.4s, v12.4s, v15.4s  //eeo0[0]
+    add v18.4s, v13.4s, v14.4s  //eeee[1]
+    sub v19.4s, v13.4s, v14.4s  //eeeo[1]
+    
+    mul v20.4s, v8.4s, v30.s[0]
+    mla v20.4s, v9.4s, v30.s[1]
+    mla v20.4s, v10.4s, v30.s[2]
+    mla v20.4s, v11.4s, v30.s[3]    //dst[4]
+
+    mul v21.4s, v8.4s, v30.s[1]
+    mls v21.4s, v9.4s, v30.s[3]
+    mls v21.4s, v10.4s, v30.s[0]
+    mls v21.4s, v11.4s, v30.s[2]    //dst[12]
+    
+    mul v22.4s, v8.4s, v30.s[2]
+    mls v22.4s, v9.4s, v30.s[0]
+    mla v22.4s, v10.4s, v30.s[3]
+    mla v22.4s, v11.4s, v30.s[1]    //dst[20]
+    
+    mul v23.4s, v8.4s, v30.s[3]
+    mls v23.4s, v9.4s, v30.s[2]
+    mla v23.4s, v10.4s, v30.s[1]
+    mls v23.4s, v11.4s, v30.s[0]    //dst[28]
+
+    mul v24.4s, v16.4s, v31.s[0]
+    mla v24.4s, v18.4s, v31.s[0]    //dst[0]
+
+    mul v25.4s, v17.4s, v31.s[1]
+    mla v25.4s, v19.4s, v31.s[2]    //dst[8]
+    
+    mul v26.4s, v16.4s, v31.s[0]
+    mls v26.4s, v18.4s, v31.s[0]    //dst[16]
+    
+    mul v27.4s, v17.4s, v31.s[2]
+    mls v27.4s, v19.4s, v31.s[1]    //dst[24]
+
+    cmp w4, #5
+    bgt tx_dct2_pb32_Shift5
+    blt tx_dct2_pb32_shift6
+    
+    sqrshrn v0.4h, v24.4s, #5
+    sqrshrn v1.4h, v20.4s, #5
+    sqrshrn v2.4h, v25.4s, #5
+    sqrshrn v3.4h, v21.4s, #5
+    sqrshrn v4.4h, v26.4s, #5
+    sqrshrn v5.4h, v22.4s, #5
+    sqrshrn v6.4h, v27.4s, #5
+    sqrshrn v7.4h, v23.4s, #5
+    b tx_dct2_pb32_shift_end3
+    
+tx_dct2_pb32_Shift5:
+    sqrshrn v0.4h, v24.4s, #10
+    sqrshrn v1.4h, v20.4s, #10
+    sqrshrn v2.4h, v25.4s, #10
+    sqrshrn v3.4h, v21.4s, #10
+    sqrshrn v4.4h, v26.4s, #10
+    sqrshrn v5.4h, v22.4s, #10
+    sqrshrn v6.4h, v27.4s, #10
+    sqrshrn v7.4h, v23.4s, #10
+    b tx_dct2_pb32_shift_end3
+    
+tx_dct2_pb32_shift6:
+    sqrshrn v0.4h, v24.4s, #3
+    sqrshrn v1.4h, v20.4s, #3
+    sqrshrn v2.4h, v25.4s, #3
+    sqrshrn v3.4h, v21.4s, #3
+    sqrshrn v4.4h, v26.4s, #3
+    sqrshrn v5.4h, v22.4s, #3
+    sqrshrn v6.4h, v27.4s, #3
+    sqrshrn v7.4h, v23.4s, #3
+    
+tx_dct2_pb32_shift_end3:
+    mov x15, x11
+    st1 {v0.d}[0], [x15], x13
+    st1 {v1.d}[0], [x15], x13
+    st1 {v2.d}[0], [x15], x13
+    st1 {v3.d}[0], [x15], x13
+    st1 {v4.d}[0], [x15], x13
+    st1 {v5.d}[0], [x15], x13
+    st1 {v6.d}[0], [x15], x13
+    st1 {v7.d}[0], [x15], x13
+
+    sub x6, x6, #192
+    add x11, x11, #8
+    subs x14, x14, #1
+    bgt tx_dct2_pb32_dst2_loop
+
+    //dst[1] dst[3] dst[5] dst[7] dst[9] dst[11] dst[13] dst[15] ...
+    sub x5, sp, #128
+    lsl x12, x3, #1      //2 * i_dst
+    lsl x13, x12, #1      //4 * i_dst
+    mov x11 ,x2
+    mov x14, #4          //loop
+    
+tx_dct2_pb32_dst3_loop:
+    ld1 {v0.8h - v3.8h}, [x5], #64
+    ld1 {v4.8h - v7.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v8.8h - v11.8h}, [x5], #64
+    ld1 {v12.8h - v15.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v16.8h - v19.8h}, [x5], #64
+    ld1 {v20.8h - v23.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v24.8h - v27.8h}, [x5], #64
+    ld1 {v28.8h - v31.8h}, [x5]
+    
+    //o[0]-o[15]
+    ssubl v0.4s, v0.4h, v31.4h
+    ssubl v1.4s, v1.4h, v30.4h
+    ssubl v2.4s, v2.4h, v29.4h
+    ssubl v3.4s, v3.4h, v28.4h
+    ssubl v4.4s, v4.4h, v27.4h
+    ssubl v5.4s, v5.4h, v26.4h
+    ssubl v6.4s, v6.4h, v25.4h
+    ssubl v7.4s, v7.4h, v24.4h
+    ssubl v8.4s, v8.4h, v23.4h
+    ssubl v9.4s, v9.4h, v22.4h
+    ssubl v10.4s, v10.4h, v21.4h
+    ssubl v11.4s, v11.4h, v20.4h
+    ssubl v12.4s, v12.4h, v19.4h
+    ssubl v13.4s, v13.4h, v18.4h
+    ssubl v14.4s, v14.4h, v17.4h
+    ssubl v15.4s, v15.4h, v16.4h
+
+    mov w7, #45
+    mov w8, #44
+    mov w9, #43
+    mov v28.s[0], w7
+    mov v28.s[1], w7
+    mov v28.s[2], w8
+    mov v28.s[3], w9
+    mov w7, #41
+    mov w8, #39
+    mov w9, #36
+    mov w10, #34
+    mov v29.s[0], w7
+    mov v29.s[1], w8
+    mov v29.s[2], w9
+    mov v29.s[3], w10
+    mov w7, #30
+    mov w8, #27
+    mov w9, #23
+    mov w10, #19
+    mov v30.s[0], w7
+    mov v30.s[1], w8
+    mov v30.s[2], w9
+    mov v30.s[3], w10
+    mov w7, #15
+    mov w8, #11
+    mov w9, #7
+    mov w10, #2
+    mov v31.s[0], w7
+    mov v31.s[1], w8
+    mov v31.s[2], w9
+    mov v31.s[3], w10
+
+    mul v16.4s, v0.4s, v28.s[0]
+    mla v16.4s, v1.4s, v28.s[1]
+    mla v16.4s, v2.4s, v28.s[2]
+    mla v16.4s, v3.4s, v28.s[3]
+    mla v16.4s, v4.4s, v29.s[0]
+    mla v16.4s, v5.4s, v29.s[1]
+    mla v16.4s, v6.4s, v29.s[2]
+    mla v16.4s, v7.4s, v29.s[3]
+    mla v16.4s, v8.4s, v30.s[0]
+    mla v16.4s, v9.4s, v30.s[1]
+    mla v16.4s, v10.4s, v30.s[2]
+    mla v16.4s, v11.4s, v30.s[3]
+    mla v16.4s, v12.4s, v31.s[0]
+    mla v16.4s, v13.4s, v31.s[1]
+    mla v16.4s, v14.4s, v31.s[2]
+    mla v16.4s, v15.4s, v31.s[3]    //dst[1]
+
+    mul v17.4s, v0.4s, v28.s[0]
+    mla v17.4s, v1.4s, v29.s[0]
+    mla v17.4s, v2.4s, v29.s[3]
+    mla v17.4s, v3.4s, v30.s[2]
+    mla v17.4s, v4.4s, v31.s[1]
+    mls v17.4s, v5.4s, v31.s[3]
+    mls v17.4s, v6.4s, v31.s[0]
+    mls v17.4s, v7.4s, v30.s[1]
+    mls v17.4s, v8.4s, v29.s[2]
+    mls v17.4s, v9.4s, v28.s[3]
+    mls v17.4s, v10.4s, v28.s[1]
+    mls v17.4s, v11.4s, v28.s[2]
+    mls v17.4s, v12.4s, v29.s[1]
+    mls v17.4s, v13.4s, v30.s[0]
+    mls v17.4s, v14.4s, v30.s[3]
+    mls v17.4s, v15.4s, v31.s[2]    //dst[3]
+    
+    mul v18.4s, v0.4s, v28.s[2]
+    mla v18.4s, v1.4s, v29.s[3]
+    mla v18.4s, v2.4s, v31.s[0]
+    mls v18.4s, v3.4s, v31.s[2]
+    mls v18.4s, v4.4s, v30.s[1]
+    mls v18.4s, v5.4s, v29.s[0]
+    mls v18.4s, v6.4s, v28.s[0]
+    mls v18.4s, v7.4s, v29.s[1]
+    mls v18.4s, v8.4s, v30.s[2]
+    mls v18.4s, v9.4s, v31.s[3]
+    mla v18.4s, v10.4s, v30.s[3]
+    mla v18.4s, v11.4s, v29.s[2]
+    mla v18.4s, v12.4s, v28.s[1]
+    mla v18.4s, v13.4s, v28.s[3]
+    mla v18.4s, v14.4s, v30.s[0]
+    mla v18.4s, v15.4s, v31.s[1]    //dst[5]
+    
+    mul v19.4s, v0.4s, v28.s[3]
+    mla v19.4s, v1.4s, v30.s[2]
+    mls v19.4s, v2.4s, v31.s[2]
+    mls v19.4s, v3.4s, v29.s[3]
+    mls v19.4s, v4.4s, v28.s[0]
+    mls v19.4s, v5.4s, v29.s[2]
+    mls v19.4s, v6.4s, v31.s[1]
+    mla v19.4s, v7.4s, v30.s[3]
+    mla v19.4s, v8.4s, v29.s[0]
+    mla v19.4s, v9.4s, v28.s[2]
+    mla v19.4s, v10.4s, v30.s[1]
+    mls v19.4s, v11.4s, v31.s[3]
+    mls v19.4s, v12.4s, v30.s[0]
+    mls v19.4s, v13.4s, v28.s[1]
+    mls v19.4s, v14.4s, v29.s[1]
+    mls v19.4s, v15.4s, v31.s[0]    //dst[7]
+    
+    mul v20.4s, v0.4s, v29.s[0]
+    mla v20.4s, v1.4s, v31.s[1]
+    mls v20.4s, v2.4s, v30.s[1]
+    mls v20.4s, v3.4s, v28.s[0]
+    mls v20.4s, v4.4s, v30.s[0]
+    mla v20.4s, v5.4s, v31.s[2]
+    mla v20.4s, v6.4s, v29.s[1]
+    mla v20.4s, v7.4s, v28.s[3]
+    mla v20.4s, v8.4s, v31.s[0]
+    mls v20.4s, v9.4s, v30.s[2]
+    mls v20.4s, v10.4s, v28.s[1]
+    mls v20.4s, v11.4s, v29.s[3]
+    mla v20.4s, v12.4s, v31.s[3]
+    mla v20.4s, v13.4s, v29.s[2]
+    mla v20.4s, v14.4s, v28.s[2]
+    mla v20.4s, v15.4s, v30.s[3]    //dst[9]
+    
+    mul v21.4s, v0.4s, v29.s[1]
+    mls v21.4s, v1.4s, v31.s[3]
+    mls v21.4s, v2.4s, v29.s[0]
+    mls v21.4s, v3.4s, v29.s[2]
+    mla v21.4s, v4.4s, v31.s[2]
+    mla v21.4s, v5.4s, v28.s[3]
+    mla v21.4s, v6.4s, v29.s[3]
+    mls v21.4s, v7.4s, v31.s[1]
+    mls v21.4s, v8.4s, v28.s[2]
+    mls v21.4s, v9.4s, v30.s[0]
+    mla v21.4s, v10.4s, v31.s[0]
+    mla v21.4s, v11.4s, v28.s[0]
+    mla v21.4s, v12.4s, v30.s[1]
+    mls v21.4s, v13.4s, v30.s[3]
+    mls v21.4s, v14.4s, v28.s[1]
+    mls v21.4s, v15.4s, v30.s[2]    //dst[11]
+    
+    mul v22.4s, v0.4s, v29.s[2]
+    mls v22.4s, v1.4s, v31.s[0]
+    mls v22.4s, v2.4s, v28.s[0]
+    mls v22.4s, v3.4s, v31.s[1]
+    mla v22.4s, v4.4s, v29.s[1]
+    mla v22.4s, v5.4s, v29.s[3]
+    mls v22.4s, v6.4s, v30.s[3]
+    mls v22.4s, v7.4s, v28.s[1]
+    mls v22.4s, v8.4s, v31.s[2]
+    mla v22.4s, v9.4s, v29.s[0]
+    mla v22.4s, v10.4s, v30.s[0]
+    mls v22.4s, v11.4s, v30.s[2]
+    mls v22.4s, v12.4s, v28.s[2]
+    mls v22.4s, v13.4s, v31.s[3]
+    mla v22.4s, v14.4s, v28.s[3]
+    mla v22.4s, v15.4s, v30.s[1]    //dst[13]
+    
+    mul v23.4s, v0.4s, v29.s[3]
+    mls v23.4s, v1.4s, v30.s[1]
+    mls v23.4s, v2.4s, v29.s[1]
+    mla v23.4s, v3.4s, v30.s[3]
+    mla v23.4s, v4.4s, v28.s[3]
+    mls v23.4s, v5.4s, v31.s[1]
+    mls v23.4s, v6.4s, v28.s[0]
+    mla v23.4s, v7.4s, v31.s[3]
+    mla v23.4s, v8.4s, v28.s[1]
+    mla v23.4s, v9.4s, v31.s[2]
+    mls v23.4s, v10.4s, v28.s[2]
+    mls v23.4s, v11.4s, v31.s[0]
+    mla v23.4s, v12.4s, v29.s[0]
+    mla v23.4s, v13.4s, v30.s[2]
+    mls v23.4s, v14.4s, v29.s[2]
+    mls v23.4s, v15.4s, v30.s[0]    //dst[15]
+
+    cmp w4, #5
+    bgt tx_dct2_pb32_shift7
+    blt tx_dct2_pb32_shift8
+    
+    sqrshrn v16.4h, v16.4s, #5
+    sqrshrn v17.4h, v17.4s, #5
+    sqrshrn v18.4h, v18.4s, #5
+    sqrshrn v19.4h, v19.4s, #5
+    sqrshrn v20.4h, v20.4s, #5
+    sqrshrn v21.4h, v21.4s, #5
+    sqrshrn v22.4h, v22.4s, #5
+    sqrshrn v23.4h, v23.4s, #5
+    b tx_dct2_pb32_shift_end4
+    
+tx_dct2_pb32_shift7:
+    sqrshrn v16.4h, v16.4s, #10
+    sqrshrn v17.4h, v17.4s, #10
+    sqrshrn v18.4h, v18.4s, #10
+    sqrshrn v19.4h, v19.4s, #10
+    sqrshrn v20.4h, v20.4s, #10
+    sqrshrn v21.4h, v21.4s, #10
+    sqrshrn v22.4h, v22.4s, #10
+    sqrshrn v23.4h, v23.4s, #10
+    b tx_dct2_pb32_shift_end4
+    
+tx_dct2_pb32_shift8:
+    sqrshrn v16.4h, v16.4s, #3
+    sqrshrn v17.4h, v17.4s, #3
+    sqrshrn v18.4h, v18.4s, #3
+    sqrshrn v19.4h, v19.4s, #3
+    sqrshrn v20.4h, v20.4s, #3
+    sqrshrn v21.4h, v21.4s, #3
+    sqrshrn v22.4h, v22.4s, #3
+    sqrshrn v23.4h, v23.4s, #3
+    
+tx_dct2_pb32_shift_end4:
+    add x15, x11, x3
+    st1 {v16.d}[0], [x15], x12
+    st1 {v17.d}[0], [x15], x12
+    st1 {v18.d}[0], [x15], x12
+    st1 {v19.d}[0], [x15], x12
+    st1 {v20.d}[0], [x15], x12
+    st1 {v21.d}[0], [x15], x12
+    st1 {v22.d}[0], [x15], x12
+    st1 {v23.d}[0], [x15], x12
+    
+    mul v16.4s, v0.4s, v30.s[0]
+    mls v16.4s, v1.4s, v29.s[2]
+    mls v16.4s, v2.4s, v30.s[2]
+    mla v16.4s, v3.4s, v29.s[0]
+    mla v16.4s, v4.4s, v31.s[0]
+    mls v16.4s, v5.4s, v28.s[2]
+    mls v16.4s, v6.4s, v31.s[2]
+    mla v16.4s, v7.4s, v28.s[0]
+    mls v16.4s, v8.4s, v31.s[3]
+    mls v16.4s, v9.4s, v28.s[1]
+    mla v16.4s, v10.4s, v31.s[1]
+    mla v16.4s, v11.4s, v28.s[3]
+    mls v16.4s, v12.4s, v30.s[3]
+    mls v16.4s, v13.4s, v29.s[1]
+    mla v16.4s, v14.4s, v30.s[1]
+    mla v16.4s, v15.4s, v29.s[3]    //dst[17]
+
+    mul v17.4s, v0.4s, v30.s[1]
+    mls v17.4s, v1.4s, v28.s[3]
+    mls v17.4s, v2.4s, v31.s[3]
+    mla v17.4s, v3.4s, v28.s[2]
+    mls v17.4s, v4.4s, v30.s[2]
+    mls v17.4s, v5.4s, v30.s[0]
+    mla v17.4s, v6.4s, v29.s[0]
+    mla v17.4s, v7.4s, v31.s[2]
+    mls v17.4s, v8.4s, v28.s[0]
+    mla v17.4s, v9.4s, v30.s[3]
+    mla v17.4s, v10.4s, v29.s[3]
+    mls v17.4s, v11.4s, v29.s[1]
+    mls v17.4s, v12.4s, v31.s[1]
+    mla v17.4s, v13.4s, v28.s[1]
+    mls v17.4s, v14.4s, v31.s[0]
+    mls v17.4s, v15.4s, v29.s[2]    //dst[19]
+    
+    mul v18.4s, v0.4s, v30.s[2]
+    mls v18.4s, v1.4s, v28.s[0]
+    mla v18.4s, v2.4s, v30.s[3]
+    mla v18.4s, v3.4s, v30.s[1]
+    mls v18.4s, v4.4s, v28.s[1]
+    mla v18.4s, v5.4s, v31.s[0]
+    mla v18.4s, v6.4s, v30.s[0]
+    mls v18.4s, v7.4s, v28.s[2]
+    mla v18.4s, v8.4s, v31.s[1]
+    mla v18.4s, v9.4s, v29.s[3]
+    mls v18.4s, v10.4s, v28.s[3]
+    mla v18.4s, v11.4s, v31.s[2]
+    mla v18.4s, v12.4s, v29.s[2]
+    mls v18.4s, v13.4s, v29.s[0]
+    mla v18.4s, v14.4s, v31.s[3]
+    mla v18.4s, v15.4s, v29.s[1]    //dst[21]
+    
+    mul v19.4s, v0.4s, v30.s[3]
+    mls v19.4s, v1.4s, v28.s[2]
+    mla v19.4s, v2.4s, v29.s[2]
+    mls v19.4s, v3.4s, v31.s[3]
+    mls v19.4s, v4.4s, v29.s[3]
+    mla v19.4s, v5.4s, v28.s[0]
+    mls v19.4s, v6.4s, v30.s[2]
+    mls v19.4s, v7.4s, v31.s[0]
+    mla v19.4s, v8.4s, v28.s[3]
+    mls v19.4s, v9.4s, v29.s[1]
+    mla v19.4s, v10.4s, v31.s[2]
+    mla v19.4s, v11.4s, v30.s[0]
+    mls v19.4s, v12.4s, v28.s[1]
+    mla v19.4s, v13.4s, v30.s[1]
+    mla v19.4s, v14.4s, v31.s[1]    //dst[23]
+    mls v19.4s, v15.4s, v29.s[0]
+    
+    mul v20.4s, v0.4s, v31.s[0]
+    mls v20.4s, v1.4s, v29.s[1]
+    mla v20.4s, v2.4s, v28.s[0]
+    mls v20.4s, v3.4s, v30.s[0]
+    mla v20.4s, v4.4s, v31.s[3]
+    mla v20.4s, v5.4s, v30.s[1]
+    mls v20.4s, v6.4s, v28.s[2]
+    mla v20.4s, v7.4s, v29.s[0]
+    mls v20.4s, v8.4s, v30.s[3]
+    mls v20.4s, v9.4s, v31.s[1]
+    mla v20.4s, v10.4s, v29.s[2]
+    mls v20.4s, v11.4s, v28.s[1]
+    mla v20.4s, v12.4s, v29.s[3]
+    mls v20.4s, v13.4s, v31.s[2]
+    mls v20.4s, v14.4s, v30.s[2]
+    mla v20.4s, v15.4s, v28.s[3]    //dst[25]
+    
+    mul v21.4s, v0.4s, v31.s[1]
+    mls v21.4s, v1.4s, v30.s[0]
+    mla v21.4s, v2.4s, v28.s[3]
+    mls v21.4s, v3.4s, v28.s[0]
+    mla v21.4s, v4.4s, v29.s[2]
+    mls v21.4s, v5.4s, v30.s[3]
+    mls v21.4s, v6.4s, v31.s[3]
+    mla v21.4s, v7.4s, v30.s[2]
+    mls v21.4s, v8.4s, v29.s[1]
+    mla v21.4s, v9.4s, v28.s[1]
+    mls v21.4s, v10.4s, v29.s[0]
+    mla v21.4s, v11.4s, v30.s[1]
+    mls v21.4s, v12.4s, v31.s[2]
+    mls v21.4s, v13.4s, v31.s[0]
+    mla v21.4s, v14.4s, v29.s[3]
+    mls v21.4s, v15.4s, v28.s[2]    //dst[27]
+    
+    mul v22.4s, v0.4s, v31.s[2]
+    mls v22.4s, v1.4s, v30.s[3]
+    mla v22.4s, v2.4s, v30.s[0]
+    mls v22.4s, v3.4s, v29.s[1]
+    mla v22.4s, v4.4s, v28.s[2]
+    mls v22.4s, v5.4s, v28.s[0]
+    mla v22.4s, v6.4s, v28.s[3]
+    mls v22.4s, v7.4s, v29.s[2]
+    mla v22.4s, v8.4s, v30.s[1]
+    mls v22.4s, v9.4s, v31.s[0]
+    mla v22.4s, v10.4s, v31.s[3]
+    mla v22.4s, v11.4s, v31.s[1]
+    mls v22.4s, v12.4s, v30.s[2]
+    mla v22.4s, v13.4s, v29.s[3]
+    mls v22.4s, v14.4s, v29.s[0]
+    mla v22.4s, v15.4s, v28.s[1]    //dst[29]
+    
+    mul v23.4s, v0.4s, v31.s[3]
+    mls v23.4s, v1.4s, v31.s[2]
+    mla v23.4s, v2.4s, v31.s[1]
+    mls v23.4s, v3.4s, v31.s[0]
+    mla v23.4s, v4.4s, v30.s[3]
+    mls v23.4s, v5.4s, v30.s[2]
+    mla v23.4s, v6.4s, v30.s[1]
+    mls v23.4s, v7.4s, v30.s[0]
+    mla v23.4s, v8.4s, v29.s[3]
+    mls v23.4s, v9.4s, v29.s[2]
+    mla v23.4s, v10.4s, v29.s[1]
+    mls v23.4s, v11.4s, v29.s[0]
+    mla v23.4s, v12.4s, v28.s[3]
+    mls v23.4s, v13.4s, v28.s[2]
+    mla v23.4s, v14.4s, v28.s[1]
+    mls v23.4s, v15.4s, v28.s[0]    //dst[31]
+
+    cmp w4, #5
+    bgt tx_dct2_pb32_shift9
+    blt tx_dct2_pb32_Shift10
+    
+    sqrshrn v16.4h, v16.4s, #5
+    sqrshrn v17.4h, v17.4s, #5
+    sqrshrn v18.4h, v18.4s, #5
+    sqrshrn v19.4h, v19.4s, #5
+    sqrshrn v20.4h, v20.4s, #5
+    sqrshrn v21.4h, v21.4s, #5
+    sqrshrn v22.4h, v22.4s, #5
+    sqrshrn v23.4h, v23.4s, #5
+    b tx_dct2_pb32_shift_end5
+    
+    tx_dct2_pb32_shift9:
+    sqrshrn v16.4h, v16.4s, #10
+    sqrshrn v17.4h, v17.4s, #10
+    sqrshrn v18.4h, v18.4s, #10
+    sqrshrn v19.4h, v19.4s, #10
+    sqrshrn v20.4h, v20.4s, #10
+    sqrshrn v21.4h, v21.4s, #10
+    sqrshrn v22.4h, v22.4s, #10
+    sqrshrn v23.4h, v23.4s, #10
+    b tx_dct2_pb32_shift_end5
+    
+    tx_dct2_pb32_Shift10:
+    sqrshrn v16.4h, v16.4s, #3
+    sqrshrn v17.4h, v17.4s, #3
+    sqrshrn v18.4h, v18.4s, #3
+    sqrshrn v19.4h, v19.4s, #3
+    sqrshrn v20.4h, v20.4s, #3
+    sqrshrn v21.4h, v21.4s, #3
+    sqrshrn v22.4h, v22.4s, #3
+    sqrshrn v23.4h, v23.4s, #3
+    
+tx_dct2_pb32_shift_end5:
+    st1 {v16.d}[0], [x15], x12
+    st1 {v17.d}[0], [x15], x12
+    st1 {v18.d}[0], [x15], x12
+    st1 {v19.d}[0], [x15], x12
+    st1 {v20.d}[0], [x15], x12
+    st1 {v21.d}[0], [x15], x12
+    st1 {v22.d}[0], [x15], x12
+    st1 {v23.d}[0], [x15], x12
+
+    add x5, x5, #320
+    ld1 {v0.8h - v3.8h}, [x5], #64
+    ld1 {v4.8h - v7.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v8.8h - v11.8h}, [x5], #64
+    ld1 {v12.8h - v15.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v16.8h - v19.8h}, [x5], #64
+    ld1 {v20.8h - v23.8h}, [x5]
+    sub x5, x5, #192
+    ld1 {v24.8h - v27.8h}, [x5], #64
+    ld1 {v28.8h - v31.8h}, [x5]
+
+    //o[0]-o[15]
+    ssubl2 v0.4s, v0.8h, v31.8h
+    ssubl2 v1.4s, v1.8h, v30.8h
+    ssubl2 v2.4s, v2.8h, v29.8h
+    ssubl2 v3.4s, v3.8h, v28.8h
+    ssubl2 v4.4s, v4.8h, v27.8h
+    ssubl2 v5.4s, v5.8h, v26.8h
+    ssubl2 v6.4s, v6.8h, v25.8h
+    ssubl2 v7.4s, v7.8h, v24.8h
+    ssubl2 v8.4s, v8.8h, v23.8h
+    ssubl2 v9.4s, v9.8h, v22.8h
+    ssubl2 v10.4s, v10.8h, v21.8h
+    ssubl2 v11.4s, v11.8h, v20.8h
+    ssubl2 v12.4s, v12.8h, v19.8h
+    ssubl2 v13.4s, v13.8h, v18.8h
+    ssubl2 v14.4s, v14.8h, v17.8h
+    ssubl2 v15.4s, v15.8h, v16.8h
+    
+    mov w7, #45
+    mov w8, #44
+    mov w9, #43
+    mov v28.s[0], w7
+    mov v28.s[1], w7
+    mov v28.s[2], w8
+    mov v28.s[3], w9
+    mov w7, #41
+    mov w8, #39
+    mov w9, #36
+    mov w10, #34
+    mov v29.s[0], w7
+    mov v29.s[1], w8
+    mov v29.s[2], w9
+    mov v29.s[3], w10
+    mov w7, #30
+    mov w8, #27
+    mov w9, #23
+    mov w10, #19
+    mov v30.s[0], w7
+    mov v30.s[1], w8
+    mov v30.s[2], w9
+    mov v30.s[3], w10
+    mov w7, #15
+    mov w8, #11
+    mov w9, #7
+    mov w10, #2
+    mov v31.s[0], w7
+    mov v31.s[1], w8
+    mov v31.s[2], w9
+    mov v31.s[3], w10
+    
+    mul v16.4s, v0.4s, v28.s[0]
+    mla v16.4s, v1.4s, v28.s[1]
+    mla v16.4s, v2.4s, v28.s[2]
+    mla v16.4s, v3.4s, v28.s[3]
+    mla v16.4s, v4.4s, v29.s[0]
+    mla v16.4s, v5.4s, v29.s[1]
+    mla v16.4s, v6.4s, v29.s[2]
+    mla v16.4s, v7.4s, v29.s[3]
+    mla v16.4s, v8.4s, v30.s[0]
+    mla v16.4s, v9.4s, v30.s[1]
+    mla v16.4s, v10.4s, v30.s[2]
+    mla v16.4s, v11.4s, v30.s[3]
+    mla v16.4s, v12.4s, v31.s[0]
+    mla v16.4s, v13.4s, v31.s[1]
+    mla v16.4s, v14.4s, v31.s[2]
+    mla v16.4s, v15.4s, v31.s[3]    //dst[1]
+    
+    mul v17.4s, v0.4s, v28.s[0]
+    mla v17.4s, v1.4s, v29.s[0]
+    mla v17.4s, v2.4s, v29.s[3]
+    mla v17.4s, v3.4s, v30.s[2]
+    mla v17.4s, v4.4s, v31.s[1]
+    mls v17.4s, v5.4s, v31.s[3]
+    mls v17.4s, v6.4s, v31.s[0]
+    mls v17.4s, v7.4s, v30.s[1]
+    mls v17.4s, v8.4s, v29.s[2]
+    mls v17.4s, v9.4s, v28.s[3]
+    mls v17.4s, v10.4s, v28.s[1]
+    mls v17.4s, v11.4s, v28.s[2]
+    mls v17.4s, v12.4s, v29.s[1]
+    mls v17.4s, v13.4s, v30.s[0]
+    mls v17.4s, v14.4s, v30.s[3]
+    mls v17.4s, v15.4s, v31.s[2]    //dst[3]
+    
+    mul v18.4s, v0.4s, v28.s[2]
+    mla v18.4s, v1.4s, v29.s[3]
+    mla v18.4s, v2.4s, v31.s[0]
+    mls v18.4s, v3.4s, v31.s[2]
+    mls v18.4s, v4.4s, v30.s[1]
+    mls v18.4s, v5.4s, v29.s[0]
+    mls v18.4s, v6.4s, v28.s[0]
+    mls v18.4s, v7.4s, v29.s[1]
+    mls v18.4s, v8.4s, v30.s[2]
+    mls v18.4s, v9.4s, v31.s[3]
+    mla v18.4s, v10.4s, v30.s[3]
+    mla v18.4s, v11.4s, v29.s[2]
+    mla v18.4s, v12.4s, v28.s[1]
+    mla v18.4s, v13.4s, v28.s[3]
+    mla v18.4s, v14.4s, v30.s[0]
+    mla v18.4s, v15.4s, v31.s[1]    //dst[5]
+    
+    mul v19.4s, v0.4s, v28.s[3]
+    mla v19.4s, v1.4s, v30.s[2]
+    mls v19.4s, v2.4s, v31.s[2]
+    mls v19.4s, v3.4s, v29.s[3]
+    mls v19.4s, v4.4s, v28.s[0]
+    mls v19.4s, v5.4s, v29.s[2]
+    mls v19.4s, v6.4s, v31.s[1]
+    mla v19.4s, v7.4s, v30.s[3]
+    mla v19.4s, v8.4s, v29.s[0]
+    mla v19.4s, v9.4s, v28.s[2]
+    mla v19.4s, v10.4s, v30.s[1]
+    mls v19.4s, v11.4s, v31.s[3]
+    mls v19.4s, v12.4s, v30.s[0]
+    mls v19.4s, v13.4s, v28.s[1]
+    mls v19.4s, v14.4s, v29.s[1]
+    mls v19.4s, v15.4s, v31.s[0]    //dst[7]
+    
+    mul v20.4s, v0.4s, v29.s[0]
+    mla v20.4s, v1.4s, v31.s[1]
+    mls v20.4s, v2.4s, v30.s[1]
+    mls v20.4s, v3.4s, v28.s[0]
+    mls v20.4s, v4.4s, v30.s[0]
+    mla v20.4s, v5.4s, v31.s[2]
+    mla v20.4s, v6.4s, v29.s[1]
+    mla v20.4s, v7.4s, v28.s[3]
+    mla v20.4s, v8.4s, v31.s[0]
+    mls v20.4s, v9.4s, v30.s[2]
+    mls v20.4s, v10.4s, v28.s[1]
+    mls v20.4s, v11.4s, v29.s[3]
+    mla v20.4s, v12.4s, v31.s[3]
+    mla v20.4s, v13.4s, v29.s[2]
+    mla v20.4s, v14.4s, v28.s[2]
+    mla v20.4s, v15.4s, v30.s[3]    //dst[9]
+    
+    mul v21.4s, v0.4s, v29.s[1]
+    mls v21.4s, v1.4s, v31.s[3]
+    mls v21.4s, v2.4s, v29.s[0]
+    mls v21.4s, v3.4s, v29.s[2]
+    mla v21.4s, v4.4s, v31.s[2]
+    mla v21.4s, v5.4s, v28.s[3]
+    mla v21.4s, v6.4s, v29.s[3]
+    mls v21.4s, v7.4s, v31.s[1]
+    mls v21.4s, v8.4s, v28.s[2]
+    mls v21.4s, v9.4s, v30.s[0]
+    mla v21.4s, v10.4s, v31.s[0]
+    mla v21.4s, v11.4s, v28.s[0]
+    mla v21.4s, v12.4s, v30.s[1]
+    mls v21.4s, v13.4s, v30.s[3]
+    mls v21.4s, v14.4s, v28.s[1]
+    mls v21.4s, v15.4s, v30.s[2]    //dst[11]
+    
+    mul v22.4s, v0.4s, v29.s[2]
+    mls v22.4s, v1.4s, v31.s[0]
+    mls v22.4s, v2.4s, v28.s[0]
+    mls v22.4s, v3.4s, v31.s[1]
+    mla v22.4s, v4.4s, v29.s[1]
+    mla v22.4s, v5.4s, v29.s[3]
+    mls v22.4s, v6.4s, v30.s[3]
+    mls v22.4s, v7.4s, v28.s[1]
+    mls v22.4s, v8.4s, v31.s[2]
+    mla v22.4s, v9.4s, v29.s[0]
+    mla v22.4s, v10.4s, v30.s[0]
+    mls v22.4s, v11.4s, v30.s[2]
+    mls v22.4s, v12.4s, v28.s[2]
+    mls v22.4s, v13.4s, v31.s[3]
+    mla v22.4s, v14.4s, v28.s[3]
+    mla v22.4s, v15.4s, v30.s[1]    //dst[13]
+    
+    mul v23.4s, v0.4s, v29.s[3]
+    mls v23.4s, v1.4s, v30.s[1]
+    mls v23.4s, v2.4s, v29.s[1]
+    mla v23.4s, v3.4s, v30.s[3]
+    mla v23.4s, v4.4s, v28.s[3]
+    mls v23.4s, v5.4s, v31.s[1]
+    mls v23.4s, v6.4s, v28.s[0]
+    mla v23.4s, v7.4s, v31.s[3]
+    mla v23.4s, v8.4s, v28.s[1]
+    mla v23.4s, v9.4s, v31.s[2]
+    mls v23.4s, v10.4s, v28.s[2]
+    mls v23.4s, v11.4s, v31.s[0]
+    mla v23.4s, v12.4s, v29.s[0]
+    mla v23.4s, v13.4s, v30.s[2]
+    mls v23.4s, v14.4s, v29.s[2]
+    mls v23.4s, v15.4s, v30.s[0]    //dst[15]
+    
+    cmp w4, #5
+    bgt tx_dct2_pb32_shift11
+    blt tx_dct2_pb32_shift12
+    
+    sqrshrn v16.4h, v16.4s, #5
+    sqrshrn v17.4h, v17.4s, #5
+    sqrshrn v18.4h, v18.4s, #5
+    sqrshrn v19.4h, v19.4s, #5
+    sqrshrn v20.4h, v20.4s, #5
+    sqrshrn v21.4h, v21.4s, #5
+    sqrshrn v22.4h, v22.4s, #5
+    sqrshrn v23.4h, v23.4s, #5
+    b tx_dct2_pb32_shift_end6
+    
+    tx_dct2_pb32_shift11:
+    sqrshrn v16.4h, v16.4s, #10
+    sqrshrn v17.4h, v17.4s, #10
+    sqrshrn v18.4h, v18.4s, #10
+    sqrshrn v19.4h, v19.4s, #10
+    sqrshrn v20.4h, v20.4s, #10
+    sqrshrn v21.4h, v21.4s, #10
+    sqrshrn v22.4h, v22.4s, #10
+    sqrshrn v23.4h, v23.4s, #10
+    b tx_dct2_pb32_shift_end6
+    
+    tx_dct2_pb32_shift12:
+    sqrshrn v16.4h, v16.4s, #3
+    sqrshrn v17.4h, v17.4s, #3
+    sqrshrn v18.4h, v18.4s, #3
+    sqrshrn v19.4h, v19.4s, #3
+    sqrshrn v20.4h, v20.4s, #3
+    sqrshrn v21.4h, v21.4s, #3
+    sqrshrn v22.4h, v22.4s, #3
+    sqrshrn v23.4h, v23.4s, #3
+    
+tx_dct2_pb32_shift_end6:
+    add x11, x11, #8
+    add x15, x11, x3
+    st1 {v16.d}[0], [x15], x12
+    st1 {v17.d}[0], [x15], x12
+    st1 {v18.d}[0], [x15], x12
+    st1 {v19.d}[0], [x15], x12
+    st1 {v20.d}[0], [x15], x12
+    st1 {v21.d}[0], [x15], x12
+    st1 {v22.d}[0], [x15], x12
+    st1 {v23.d}[0], [x15], x12
+    
+    mul v16.4s, v0.4s, v30.s[0]
+    mls v16.4s, v1.4s, v29.s[2]
+    mls v16.4s, v2.4s, v30.s[2]
+    mla v16.4s, v3.4s, v29.s[0]
+    mla v16.4s, v4.4s, v31.s[0]
+    mls v16.4s, v5.4s, v28.s[2]
+    mls v16.4s, v6.4s, v31.s[2]
+    mla v16.4s, v7.4s, v28.s[0]
+    mls v16.4s, v8.4s, v31.s[3]
+    mls v16.4s, v9.4s, v28.s[1]
+    mla v16.4s, v10.4s, v31.s[1]
+    mla v16.4s, v11.4s, v28.s[3]
+    mls v16.4s, v12.4s, v30.s[3]
+    mls v16.4s, v13.4s, v29.s[1]
+    mla v16.4s, v14.4s, v30.s[1]
+    mla v16.4s, v15.4s, v29.s[3]    //dst[17]
+    
+    mul v17.4s, v0.4s, v30.s[1]
+    mls v17.4s, v1.4s, v28.s[3]
+    mls v17.4s, v2.4s, v31.s[3]
+    mla v17.4s, v3.4s, v28.s[2]
+    mls v17.4s, v4.4s, v30.s[2]
+    mls v17.4s, v5.4s, v30.s[0]
+    mla v17.4s, v6.4s, v29.s[0]
+    mla v17.4s, v7.4s, v31.s[2]
+    mls v17.4s, v8.4s, v28.s[0]
+    mla v17.4s, v9.4s, v30.s[3]
+    mla v17.4s, v10.4s, v29.s[3]
+    mls v17.4s, v11.4s, v29.s[1]
+    mls v17.4s, v12.4s, v31.s[1]
+    mla v17.4s, v13.4s, v28.s[1]
+    mls v17.4s, v14.4s, v31.s[0]
+    mls v17.4s, v15.4s, v29.s[2]    //dst[19]
+    
+    mul v18.4s, v0.4s, v30.s[2]
+    mls v18.4s, v1.4s, v28.s[0]
+    mla v18.4s, v2.4s, v30.s[3]
+    mla v18.4s, v3.4s, v30.s[1]
+    mls v18.4s, v4.4s, v28.s[1]
+    mla v18.4s, v5.4s, v31.s[0]
+    mla v18.4s, v6.4s, v30.s[0]
+    mls v18.4s, v7.4s, v28.s[2]
+    mla v18.4s, v8.4s, v31.s[1]
+    mla v18.4s, v9.4s, v29.s[3]
+    mls v18.4s, v10.4s, v28.s[3]
+    mla v18.4s, v11.4s, v31.s[2]
+    mla v18.4s, v12.4s, v29.s[2]
+    mls v18.4s, v13.4s, v29.s[0]
+    mla v18.4s, v14.4s, v31.s[3]
+    mla v18.4s, v15.4s, v29.s[1]    //dst[21]
+    
+    mul v19.4s, v0.4s, v30.s[3]
+    mls v19.4s, v1.4s, v28.s[2]
+    mla v19.4s, v2.4s, v29.s[2]
+    mls v19.4s, v3.4s, v31.s[3]
+    mls v19.4s, v4.4s, v29.s[3]
+    mla v19.4s, v5.4s, v28.s[0]
+    mls v19.4s, v6.4s, v30.s[2]
+    mls v19.4s, v7.4s, v31.s[0]
+    mla v19.4s, v8.4s, v28.s[3]
+    mls v19.4s, v9.4s, v29.s[1]
+    mla v19.4s, v10.4s, v31.s[2]
+    mla v19.4s, v11.4s, v30.s[0]
+    mls v19.4s, v12.4s, v28.s[1]
+    mla v19.4s, v13.4s, v30.s[1]
+    mla v19.4s, v14.4s, v31.s[1]    //dst[23]
+    mls v19.4s, v15.4s, v29.s[0]
+    
+    mul v20.4s, v0.4s, v31.s[0]
+    mls v20.4s, v1.4s, v29.s[1]
+    mla v20.4s, v2.4s, v28.s[0]
+    mls v20.4s, v3.4s, v30.s[0]
+    mla v20.4s, v4.4s, v31.s[3]
+    mla v20.4s, v5.4s, v30.s[1]
+    mls v20.4s, v6.4s, v28.s[2]
+    mla v20.4s, v7.4s, v29.s[0]
+    mls v20.4s, v8.4s, v30.s[3]
+    mls v20.4s, v9.4s, v31.s[1]
+    mla v20.4s, v10.4s, v29.s[2]
+    mls v20.4s, v11.4s, v28.s[1]
+    mla v20.4s, v12.4s, v29.s[3]
+    mls v20.4s, v13.4s, v31.s[2]
+    mls v20.4s, v14.4s, v30.s[2]
+    mla v20.4s, v15.4s, v28.s[3]    //dst[25]
+    
+    mul v21.4s, v0.4s, v31.s[1]
+    mls v21.4s, v1.4s, v30.s[0]
+    mla v21.4s, v2.4s, v28.s[3]
+    mls v21.4s, v3.4s, v28.s[0]
+    mla v21.4s, v4.4s, v29.s[2]
+    mls v21.4s, v5.4s, v30.s[3]
+    mls v21.4s, v6.4s, v31.s[3]
+    mla v21.4s, v7.4s, v30.s[2]
+    mls v21.4s, v8.4s, v29.s[1]
+    mla v21.4s, v9.4s, v28.s[1]
+    mls v21.4s, v10.4s, v29.s[0]
+    mla v21.4s, v11.4s, v30.s[1]
+    mls v21.4s, v12.4s, v31.s[2]
+    mls v21.4s, v13.4s, v31.s[0]
+    mla v21.4s, v14.4s, v29.s[3]
+    mls v21.4s, v15.4s, v28.s[2]    //dst[27]
+    
+    mul v22.4s, v0.4s, v31.s[2]
+    mls v22.4s, v1.4s, v30.s[3]
+    mla v22.4s, v2.4s, v30.s[0]
+    mls v22.4s, v3.4s, v29.s[1]
+    mla v22.4s, v4.4s, v28.s[2]
+    mls v22.4s, v5.4s, v28.s[0]
+    mla v22.4s, v6.4s, v28.s[3]
+    mls v22.4s, v7.4s, v29.s[2]
+    mla v22.4s, v8.4s, v30.s[1]
+    mls v22.4s, v9.4s, v31.s[0]
+    mla v22.4s, v10.4s, v31.s[3]
+    mla v22.4s, v11.4s, v31.s[1]
+    mls v22.4s, v12.4s, v30.s[2]
+    mla v22.4s, v13.4s, v29.s[3]
+    mls v22.4s, v14.4s, v29.s[0]
+    mla v22.4s, v15.4s, v28.s[1]    //dst[29]
+    
+    mul v23.4s, v0.4s, v31.s[3]
+    mls v23.4s, v1.4s, v31.s[2]
+    mla v23.4s, v2.4s, v31.s[1]
+    mls v23.4s, v3.4s, v31.s[0]
+    mla v23.4s, v4.4s, v30.s[3]
+    mls v23.4s, v5.4s, v30.s[2]
+    mla v23.4s, v6.4s, v30.s[1]
+    mls v23.4s, v7.4s, v30.s[0]
+    mla v23.4s, v8.4s, v29.s[3]
+    mls v23.4s, v9.4s, v29.s[2]
+    mla v23.4s, v10.4s, v29.s[1]
+    mls v23.4s, v11.4s, v29.s[0]
+    mla v23.4s, v12.4s, v28.s[3]
+    mls v23.4s, v13.4s, v28.s[2]
+    mla v23.4s, v14.4s, v28.s[1]
+    mls v23.4s, v15.4s, v28.s[0]    //dst[31]
+    
+    cmp w4, #5
+    bgt tx_dct2_pb32_shift13
+    blt tx_dct2_pb32_shift14
+    
+    sqrshrn v16.4h, v16.4s, #5
+    sqrshrn v17.4h, v17.4s, #5
+    sqrshrn v18.4h, v18.4s, #5
+    sqrshrn v19.4h, v19.4s, #5
+    sqrshrn v20.4h, v20.4s, #5
+    sqrshrn v21.4h, v21.4s, #5
+    sqrshrn v22.4h, v22.4s, #5
+    sqrshrn v23.4h, v23.4s, #5
+    b tx_dct2_pb32_shift_end7
+    
+    tx_dct2_pb32_shift13:
+    sqrshrn v16.4h, v16.4s, #10
+    sqrshrn v17.4h, v17.4s, #10
+    sqrshrn v18.4h, v18.4s, #10
+    sqrshrn v19.4h, v19.4s, #10
+    sqrshrn v20.4h, v20.4s, #10
+    sqrshrn v21.4h, v21.4s, #10
+    sqrshrn v22.4h, v22.4s, #10
+    sqrshrn v23.4h, v23.4s, #10
+    b tx_dct2_pb32_shift_end7
+    
+tx_dct2_pb32_shift14:
+    sqrshrn v16.4h, v16.4s, #3
+    sqrshrn v17.4h, v17.4s, #3
+    sqrshrn v18.4h, v18.4s, #3
+    sqrshrn v19.4h, v19.4s, #3
+    sqrshrn v20.4h, v20.4s, #3
+    sqrshrn v21.4h, v21.4s, #3
+    sqrshrn v22.4h, v22.4s, #3
+    sqrshrn v23.4h, v23.4s, #3
+    
+tx_dct2_pb32_shift_end7:
+    st1 {v16.d}[0], [x15], x12
+    st1 {v17.d}[0], [x15], x12
+    st1 {v18.d}[0], [x15], x12
+    st1 {v19.d}[0], [x15], x12
+    st1 {v20.d}[0], [x15], x12
+    st1 {v21.d}[0], [x15], x12
+    st1 {v22.d}[0], [x15], x12
+    st1 {v23.d}[0], [x15], x12
+
+    sub x5, x5, #192
+    add x11, x11, #8
+    subs x14, x14, #1
+    bgt tx_dct2_pb32_dst3_loop
+    
+    ld1 {v12.8h - v15.8h}, [sp], #64
+    ld1 {v8.8h - v11.8h}, [sp], #64
+
+    
+ret
 
 tx_dct2_pb32_coef:
 .hword 32, 45, 45, 45, 44, 44, 43, 43, 42, 41, 40, 39, 38, 36, 35, 34, 32, 30, 29, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 4, 2, \
@@ -2767,6 +5769,35 @@ dct2_h32_end:
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
 
     ret
+
+//************************************************************************
+//int get_nz_num_arm64(coef_t *p_coef, int num_coeff)
+//x0: p_coef
+//x1: num_coeff
+//************************************************************************
+function get_nz_num_arm64
+    movi v16.16b, #0
+    mov w2, w1
+    
+get_nz_num_loop:
+    ld1 {v0.8h, v1.8h}, [x0], #32
+    cmeq v2.8h, v0.8h, #0
+    cmeq v3.8h, v1.8h, #0
+    add v2.8h, v2.8h, v3.8h
+    add v16.8h, v16.8h, v2.8h
+    subs x1, x1, #16
+    bgt get_nz_num_loop
+    
+    addp v16.8h, v16.8h, v16.8h
+    addp v16.8h, v16.8h, v16.8h
+    addp v16.8h, v16.8h, v16.8h
+
+    smov w3, v16.h[0]
+    add w0, w3, w2
+
+    ret
+
+
 
     #endif
 

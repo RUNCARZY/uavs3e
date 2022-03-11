@@ -1237,13 +1237,13 @@ function xGetSAD4_x4_arm64
     ldr w9, [x10]
 #endif
     
-    mov x10, #1
-    lsl x10, x10, x9       //1 << skip_lines
+    //mov x10, #1
+    //lsl x10, x10, x9       //1 << skip_lines
     lsl x1, x1, #1
-    mul x1, x1, x10
+    //mul x1, x1, x10
     lsl x6, x6, #1
-    mul x6, x6, x10
-    lsr x8, x8, x9
+    //mul x6, x6, x10
+    //lsr x8, x8, x9
 
     movi v16.16b, #0
     movi v17.16b, #0
@@ -1306,13 +1306,13 @@ function xGetSAD8_x4_arm64
     ldr w9, [x10]
 #endif
     
-    mov x10, #1
-    lsl x10, x10, x9       //1 << skip_lines
+    //mov x10, #1
+    //lsl x10, x10, x9       //1 << skip_lines
     lsl x1, x1, #1
-    mul x1, x1, x10
+    //mul x1, x1, x10
     lsl x6, x6, #1
-    mul x6, x6, x10
-    lsr x8, x8, x9
+    //mul x6, x6, x10
+    //lsr x8, x8, x9
 
     movi v16.16b, #0
     movi v17.16b, #0

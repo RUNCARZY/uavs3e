@@ -20,9 +20,26 @@ ALIGNED_32(pel_t uavs3e_sao_mask[16 * 16]) = {
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0,
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0
 };
+ALIGNED_32(pel_t uavs3e_sao_nmask[16 * 16]) = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1
+};
 
-#if 0
-void sao_getStatblk_eo_0_c(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int start_x, int end_x, int end_y)
+void sao_getStatblk_eo_0_c(pel_t* rec, pel_t* org, int i_rec, int i_org, signed char* pdiff, signed char* pedgetype, int start_x, int end_x, int end_y)
 {
     int diff;
     char_t leftsign, rightsign;
@@ -45,7 +62,7 @@ void sao_getStatblk_eo_0_c(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t*
     }
 }
 
-void sao_getStatblk_eo_90_c(pel_t* rec_base, pel_t* org_base, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int end_x, int start_y, int end_y)
+void sao_getStatblk_eo_90_c(pel_t* rec_base, pel_t* org_base, int i_rec, int i_org, signed char* pdiff, signed char* pedgetype, int end_x, int start_y, int end_y)
 {
     pel_t* org;
     pel_t* rec;
@@ -53,6 +70,8 @@ void sao_getStatblk_eo_90_c(pel_t* rec_base, pel_t* org_base, int i_rec, int i_o
     char_t upsign, downsign;
     int edgetype;
     for (int x = 0; x < end_x; x++) {
+        org = org_base + x;
+        rec = rec_base + x;
         diff = rec[0] - rec[-i_rec];
 
         upsign = diff > 0 ? 1 : (diff < 0 ? -1 : 0);
@@ -69,7 +88,7 @@ void sao_getStatblk_eo_90_c(pel_t* rec_base, pel_t* org_base, int i_rec, int i_o
     }
 }
 
-void sao_getStatblk_eo_135_c(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn)
+void sao_getStatblk_eo_135_c(pel_t* rec, pel_t* org, int i_rec, int i_org, signed char* pdiff, signed char* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn)
 {
     int diff;
     int x=0, y=0;
@@ -134,7 +153,7 @@ void sao_getStatblk_eo_135_c(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_
     }
 }
 
-void sao_getStatblk_eo_45_c(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn)
+void sao_getStatblk_eo_45_c(pel_t* rec, pel_t* org, int i_rec, int i_org, signed char* pdiff, char_t* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn)
 {
     int diff;
     int x=0, y=0;
@@ -214,10 +233,10 @@ void sao_getStatblk_arm64(void *handle, void *sao_data, int compIdx, const int p
     int smb_available_upright = (smb_available_up && smb_available_right);
     int smb_available_leftdown = (smb_available_down && smb_available_left);
     int smb_available_rightdwon = (smb_available_down && smb_available_right);
-    ALIGNED_16(i16s_t pdiff[36 * 36 + 32]);
-    ALIGNED_16(i16u_t pedgetype[36 * 36 + 32]);
     int etype;
     int width;
+    ALIGNED_8(signed char pdiff[36 * 36]);
+    ALIGNED_8(signed char pedgetype[36 * 36]);
     
     i_rec = h->img_rec->i_stride[compIdx];
     i_org = h->img_org->i_stride[compIdx];
@@ -233,32 +252,31 @@ void sao_getStatblk_arm64(void *handle, void *sao_data, int compIdx, const int p
             start_x = smb_available_left ? 0 : 1;
             end_x = smb_available_right ? lcu_pix_width : (lcu_pix_width - 1);
             width = end_x-start_x;
-            sao_getStatblk_eo_0_arm64(rec, org, i_rec, i_org, pdiff, pedgetype, start_x, end_x, end_y);
+            sao_getStatblk_eo_0_arm64(rec, org, i_rec, i_org, statsDate->diff, statsDate->count, start_x, end_x, end_y, uavs3e_sao_nmask);
             //sao_getStatblk_eo_0_c(rec, org, i_rec, i_org, pdiff, pedgetype, start_x, end_x, end_y);
-            for(y=0; y < end_y; y++){
-                for(x = start_x; x < end_x; x++){
-                    etype = pedgetype[x + width * y];
-                    statsDate->diff[etype] += pdiff[x + width * y];
-                    statsDate->count[etype]++;
-                }
-            }
+            //for(y=0; y < end_y; y++){
+            //    for(int x = start_x; x < end_x; x++){
+            //        etype = pedgetype[x + width * y];
+            //        statsDate->diff[etype] += pdiff[x + width * y];
+            //        statsDate->count[etype]++;
+            //    }
+            //}
             break;
         case SAO_TYPE_EO_90:
             end_x = lcu_pix_width;
             start_y = smb_available_up ? 0 : 1;
             end_y = smb_available_down ? lcu_pix_height : (lcu_pix_height - 1);
-
             org_base = org + start_y * i_org;
             rec_base = rec + start_y * i_rec;
-            sao_getStatblk_eo_90_arm64(rec_base, org_base, i_rec, i_org, pdiff, pedgetype, end_x, start_y, end_y);
-            //sao_getStatblk_eo_90_c(rec_base, org_base, i_rec, i_org, pdiff, pedgetype, end_x, start_y, end_y);
-            for(x=0; x < end_x; x++){
-                for(y = 0; y < (end_y - start_y); y++){
-                    etype = pedgetype[x + end_x * y];
-                    statsDate->diff[etype] += pdiff[x + end_x * y];
-                    statsDate->count[etype]++;
-                }
-            }
+            sao_getStatblk_eo_90_arm64(rec_base, org_base, i_rec, i_org, statsDate->diff, statsDate->count, end_x, start_y, end_y);
+            //sao_getStatblk_eo_90_c(rec_base, org_base, i_rec, i_org, pdiff, pedgetype, end_x, //start_y, end_y);
+            //for(x=0; x < end_x; x++){
+            //    for(y=start_y; y<end_y; y++){ //y=0;y<(end_y-start_y; y++)
+            //        etype = pedgetype[x + end_x * y];
+            //        statsDate->diff[etype] += pdiff[x + end_x * y];
+            //        statsDate->count[etype]++;
+            //    }
+            //}
             break;
         case SAO_TYPE_EO_135:
             start_x_r0 = smb_available_upleft ? 0 : 1;
@@ -267,25 +285,25 @@ void sao_getStatblk_arm64(void *handle, void *sao_data, int compIdx, const int p
             end_x_r = smb_available_right ? lcu_pix_width : (lcu_pix_width - 1);
             start_x_rn = smb_available_down ? (smb_available_left ? 0 : 1) : (lcu_pix_width - 1);
             end_x_rn = smb_available_rightdwon ? lcu_pix_width : (lcu_pix_width - 1);
-            sao_getStatblk_eo_135_arm64(rec, org, i_rec, i_org, pdiff, pedgetype, lcu_pix_height, start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn);
-            //sao_getStatblk_eo_135_c(rec, org, i_rec, i_org, pdiff, pedgetype, lcu_pix_height, start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn);
-            for(int x = start_x_r0; x < end_x_r0; x++){
-                etype = pedgetype[x];
-                statsDate->diff[etype] += pdiff[x];
-                statsDate->count[etype]++;
-            }
-            for(int y = 1; y < lcu_pix_height - 1; y++){
-                for(x = start_x_r; x < end_x_r; x++){
-                    etype = pedgetype[x + y * 36];
-                    statsDate->diff[etype] += pdiff[x + y * 36];
-                    statsDate->count[etype]++;
-                }
-            }
-            for(x = start_x_rn; x < end_x_rn; x++) {
-                etype = pedgetype[x + (lcu_pix_height - 1) *  36];
-                statsDate->diff[etype] += pdiff[x + (lcu_pix_height - 1) *  36];
-                statsDate->count[etype]++;
-            }
+            sao_getStatblk_eo_135_arm64(rec, org, i_rec, i_org, statsDate->diff, statsDate->count, lcu_pix_height, start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn, uavs3e_sao_nmask);
+            //sao_getStatblk_eo_135_c(rec, org, i_rec, i_org, pdiff, pedgetype, lcu_pix_height, //start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn);
+            //for(int x = start_x_r0; x < end_x_r0; x++){
+            //    etype = pedgetype[x];
+            //    statsDate->diff[etype] += pdiff[x];
+            //    statsDate->count[etype]++;
+            //}
+            //for(int y = 1; y < lcu_pix_height - 1; y++){
+            //    for(x = start_x_r; x < end_x_r; x++){
+            //        etype = pedgetype[x + y * 36];
+            //        statsDate->diff[etype] += pdiff[x + y * 36];
+            //        statsDate->count[etype]++;
+            //    }
+            //}
+            //for(x = start_x_rn; x < end_x_rn; x++) {
+            //    etype = pedgetype[x + (lcu_pix_height - 1) *  36];
+            //    statsDate->diff[etype] += pdiff[x + (lcu_pix_height - 1) *  36];
+            //    statsDate->count[etype]++;
+            //}
             break;
         case SAO_TYPE_EO_45:
             start_x_r0 = smb_available_up ? (smb_available_left ? 0 : 1) : (lcu_pix_width - 1);
@@ -294,37 +312,34 @@ void sao_getStatblk_arm64(void *handle, void *sao_data, int compIdx, const int p
             end_x_r = smb_available_right ? lcu_pix_width : (lcu_pix_width - 1);
             start_x_rn = smb_available_leftdown ? 0 : 1;
             end_x_rn = smb_available_down ? (smb_available_right ? lcu_pix_width : (lcu_pix_width - 1)) : 1;
-            sao_getStatblk_eo_45_arm64(rec, org, i_rec, i_org, pdiff, pedgetype, lcu_pix_height, start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn);
+            sao_getStatblk_eo_45_arm64(rec, org, i_rec, i_org, statsDate->diff, statsDate->count, lcu_pix_height, start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn, uavs3e_sao_nmask);
             //sao_getStatblk_eo_45_c(rec, org, i_rec, i_org, pdiff, pedgetype, lcu_pix_height, start_x_r0, end_x_r0, start_x_r, end_x_r, start_x_rn, end_x_rn);
-                
-            for(int x = start_x_r0; x < end_x_r0; x++){
-                etype = pedgetype[x];
-                statsDate->diff[etype] += pdiff[x];
-                statsDate->count[etype]++;
-            }
-            for(int y = 1; y < lcu_pix_height - 1; y++){
-                for(x = start_x_r; x < end_x_r; x++){
-                    etype = pedgetype[x + y * 36];
-                    statsDate->diff[etype] += pdiff[x + y * 36];
-                    statsDate->count[etype]++;
-                }
-            }
-            for(x = start_x_rn; x < end_x_rn; x++) {
-                etype = pedgetype[x + (lcu_pix_height - 1) *  36];
-                statsDate->diff[etype] += pdiff[x + (lcu_pix_height - 1) *  36];
-                statsDate->count[etype]++;
-            }
+            
+            //for(int x = start_x_r0; x < end_x_r0; x++){
+            //    etype = pedgetype[x];
+            //    statsDate->diff[etype] += pdiff[x];
+            //    statsDate->count[etype]++;
+            //}
+            //for(int y = 1; y < lcu_pix_height - 1; y++){
+            //    for(x = start_x_r; x < end_x_r; x++){
+            //        etype = pedgetype[x + y * 36];
+            //        statsDate->diff[etype] += pdiff[x + y * 36];
+            //        statsDate->count[etype]++;
+            //    }
+            //}
+            //for(x = start_x_rn; x < end_x_rn; x++) {
+            //    etype = pedgetype[x + (lcu_pix_height - 1) *  36];
+            //    statsDate->diff[etype] += pdiff[x + (lcu_pix_height - 1) *  36];
+            //    statsDate->count[etype]++;
+            //}
             break;
         default:
             printf("Not a supported SAO types\n");
             assert(0);
             exit(-1);
-
         }
     }
 }
-
-#endif
 
 void sao_on_lcu_arm64(void *handle, void *sao_data, int compIdx, int pix_y, int pix_x, int height, int width, int available_left, int available_right, int available_up, int available_down)
 {

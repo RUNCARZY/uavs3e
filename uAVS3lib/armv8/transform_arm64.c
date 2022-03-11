@@ -9,7 +9,7 @@ void sub_trans_4x4_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t 
     partialButterfly4x4_arm64(tmp, 4, dst, 4, 7);
 }
 
-void sub_trans_8x8_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift)
+void sub_trans_8x8_arm64_8bit(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift)
 {
     ALIGNED_32(coef_t tmp[LCU_SIZE * LCU_SIZE]);
     ALIGNED_32(resi_t resi[LCU_SIZE * LCU_SIZE]);
@@ -23,8 +23,8 @@ void sub_trans_16x16_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_
     ALIGNED_32(coef_t tmp[LCU_SIZE * LCU_SIZE]);
     ALIGNED_32(resi_t resi[LCU_SIZE * LCU_SIZE]);
     g_funs_handle.pix_sub[2](resi, org, i_org, pred, i_pred);
-    partialButterfly16x16_arm64(resi, 16, tmp, 16, shift);
-    partialButterfly16x16_arm64(tmp, 16, dst, 16, 9);
+    partialButterfly16x16_arm64_f(resi, 16, tmp, 16, shift);
+    partialButterfly16x16_arm64_s(tmp, 16, dst, 16, 9);
 }
 
 void sub_trans_32x32_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_t *dst, int shift)
@@ -32,8 +32,8 @@ void sub_trans_32x32_arm64(pel_t *org, int i_org, pel_t *pred, int i_pred, coef_
     ALIGNED_32(coef_t tmp[LCU_SIZE * LCU_SIZE]);
     ALIGNED_32(resi_t resi[LCU_SIZE * LCU_SIZE]);
     g_funs_handle.pix_sub[3](resi, org, i_org, pred, i_pred);
-    partialButterfly32x32_arm64(resi, 32, tmp, 32, shift);
-    partialButterfly32x32_arm64(tmp, 32, dst, 32, 10);
+    partialButterfly32x32_arm64_s(resi, 32, tmp, 32, shift);
+    partialButterfly32x32_arm64_s(tmp, 32, dst, 32, 10);
 }
 
 void add_inv_trans_4x4_arm64(coef_t *src, pel_t *pred, int i_pred, pel_t *dst, int i_dst, int bit_depth)

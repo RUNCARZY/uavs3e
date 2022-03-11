@@ -670,6 +670,1092 @@ test_loop_x_eo_45_end_rn:
 
 ret
 
+/***********************************************************************************************************************************
+*   void sao_getStatblk_eo_0_arm64(pel_t* rec, pel_t* org, int i_rec, int i_org, i32s_t* pdiff, i32s_t* pedgetype, int start_x, int end_x, int end_y, pel_t* mask);
+*  src->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pdegetype->x5, start_x->x6, end_x->x7, end_y->w8, mask->x9
+************************************************************************************************************************************/
+function sao_getStatblk_eo_0_arm64
+    mov x10, sp
+    ldr x8, [x10], #8
+    ldr x9, [x10]
+
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
+    sub x10, x7, x6                 // width = end_x - start_x
+
+    // ------- load mask -------
+    and x11, x10, #15
+    add x12, x9, x11, lsl #4
+    ld1 {v31.16b}, [x12]     // mask + ((end_x - start_x) & 0x0f) * 16 * sizeof(pel)
+
+    sub x10, x7, x11                // end_x_16 = end_x - ((end_x - start_x) & 0x0f)
+
+    movi v1.16b, #0
+    movi v2.16b, #1
+    movi v3.16b, #2
+    movi v4.16b, #3
+    movi v5.16b, #4
+    movi v6.16b, #5
+
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
+    movi v25.8h, #0
+
+getStat_loop_y_eo_0:
+
+    mov x15, x6                  // x = start_x
+getStat_loop_x_eo_0:
+
+    add x12, x0, x15             //rec
+    sub x13, x12, #1
+    add x14, x12, #1
+    add x11, x1, x15             //org
+
+    ld1 {v16.16b}, [x13]        // rec[x-1]
+    ld1 {v17.16b}, [x12]        // rec[x]
+    ld1 {v18.16b}, [x14]        // rec[x+1]
+
+    ld1 {v0.16b}, [x11]
+    
+    sub v0.16b, v0.16b, v17.16b  //diff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+    
+    cmp x15, x10
+    bne getStat_nomask_eo_0
+    and v31.16b, v6.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+
+getStat_nomask_eo_0:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v25.8h, v25.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+
+    add x15, x15, #16
+    cmp x15, x7
+    blt getStat_loop_x_eo_0
+
+    subs w8, w8, #1
+    add x0, x0, x2
+    add x1, x1, x3
+    bgt getStat_loop_y_eo_0
+
+    addp v25.8h, v25.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v25.8h, v25.8h, v10.8h
+    saddlp v25.4s, v25.8h
+    neg v25.4s, v25.4s
+
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+
+    st1 {v25.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+
+    ret
+
+/***********************************************************************************************************************************
+ *  void sao_getStatblk_eo_90_arm64(pel_t* rec_base, pel_t* org_base, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int end_x, int start_y, int end_y);
+ *  rec->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pedgetype->x5, end_x->x6, start_y->x7, end_y->w8
+ ************************************************************************************************************************************/
+function sao_getStatblk_eo_90_arm64
+    ldr w8, [sp]
+
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
+    and x15, x6, #15
+
+    sub x10, x6, #15            // end_x_16 = (mb_width - 15) * sizeof(pel)
+
+    sub  w8, w8, w7             // y = end_y - start_y
+
+    movi v1.16b, #0
+    movi v2.16b, #1
+    movi v3.16b, #2
+    movi v4.16b, #3
+    movi v5.16b, #4
+
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
+
+    mov w9, #-1
+    cmp x15, #4
+    beq getStat_set_mask_width_4
+    cmp x15, #0
+    beq getStat_loop_y_eo_90
+    movi v31.16b, #0
+    mov v31.s[3], w9          // v31.16b: "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1"
+    b getStat_loop_y_eo_90
+    
+getStat_set_mask_width_4:
+    movi v31.16b, #255        // v31.8h: "0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1"
+    mov w9, #0
+    mov v31.s[0], w9
+
+getStat_loop_y_eo_90:
+
+    mov  x9, #0                 // x = 0
+
+getStat_loop_x_eo_90:
+    add  x12, x0, x9            // src
+    sub  x13, x12, x2
+    add  x14, x12, x2
+    add x11, x1, x9             // org
+
+    ld1  {v17.16b}, [x12]        // rec[x]
+    ld1  {v16.16b}, [x13]        // rec[x-src_stride]
+    ld1  {v18.16b}, [x14]        // rec[x+src_stride]
+    
+    ld1 {v0.16b}, [x11]
+    sub v0.16b, v0.16b, v17.16b            //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+    
+    cmp x9, x10
+    blt getStat_nomask_eo_90
+    
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.8h, v20.8h, v31.8h
+
+getStat_nomask_eo_90:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+
+    add x9, x9, #16
+    cmp x9, x6
+    blt getStat_loop_x_eo_90
+
+    subs w8, w8, #1
+    add x0, x0, x2
+    add x1, x1, x3
+    bgt getStat_loop_y_eo_90
+
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+    
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+    
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+    
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+
+    ret
+
+/***********************************************************************************************************************************
+ *  void sao_getStatblk_eo_135_arm64(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn, pel_t* uavs3e_sao_mask);
+ *  rec->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pedgetype->x5, lcu_pix_height->x6, start_x_r0->x7, end_x_r0->w8, start_x_r->w9, end_x_r->w10, start_x_rn->w11, end_x_rn->w12, mask->x13
+ ************************************************************************************************************************************/
+function sao_getStatblk_eo_135_arm64
+#if defined(__APPLE__)
+    ldp w8, w9, [sp]
+    ldr w10, [sp, #8]
+    ldr w11, [sp, #12]
+    ldr w12, [sp, #16]
+    ldr x13, [sp, #24]
+
+#else   //未测试
+    ldp x8, x9, [sp]                // start_x_r0 and end_x_r0
+    ldr x10, [sp, #16]              //
+    ldr x11, [sp, #24]
+    ldr x12, [sp, #32]
+    ldr x13, [sp, #40]
+#endif
+
+    sxtw x8, w8                     // end_x_r0
+    sxtw x9, w9                     // start_x_r
+    sxtw x10, w10
+    sxtw x11, w11
+    sxtw x12, w12
+
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+    sub sp, sp, #16
+    stp x21, x22, [sp]
+    sub sp, sp, #16
+    stp x23, x24, [sp]
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+    movi v1.16b, #0
+    movi v2.16b, #1
+    movi v3.16b, #2
+    movi v4.16b, #3
+    movi v5.16b, #4
+
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
+
+    // ------- first row -------
+    sub x21, x8, x7
+    and x21, x21, #15
+    sub x22, x8, x21                 // end_x_r0_16 = end_x_r0 - ((end_x_r0 - start_x_r0) & 0x0f
+
+    mov  x23, x7                     // x = start_x_r0
+
+getStat_loop_x_eo_135_r0:
+    cmp x23, x8
+    bge getStat_loop_x_eo_135_end_r0
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
+    sub x15, x14, x2                // rec[x - i_rec]
+    add x19, x14, x2                // rec[x + i_rec]
+    sub x15, x15, #1                // rec[x - i_rec - 2]
+    add x19, x19, #1                // rec[x + i_rec + 2]
+    
+    ld1 {v16.16b}, [x15]        // rec[x - i_rec - 2]
+    ld1 {v17.16b}, [x14]        // rec[x]
+    ld1 {v18.16b}, [x19]        // rec[x + i_rec + 2]
+    ld1 {v0.16b}, [x20]          // org[x]
+    
+    sub v0.16b, v0.16b, v17.16b           //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+
+    cmp x23, x22
+    bne getStat_nomask_eo_135_r0
+    add x24, x13, x21, lsl #4
+    ld1 {v31.16b}, [x24]
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+    
+getStat_nomask_eo_135_r0:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+    add x23, x23, #16
+    
+    b getStat_loop_x_eo_135_r0
+
+getStat_loop_x_eo_135_end_r0:
+    add x0, x0, x2                      // rec += i_rec
+    add x1, x1, x3                      // org += i_org
+
+    // ------- middle rows -------
+
+    sub x8, x6, #2                     // y = mb_height - 2
+
+    sub x21, x10, x9
+    and x21, x21, #15
+    sub x22, x10, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+
+getStat_loop_y_eo_135_r:
+    mov x23, x9                          // x = start_x_r
+
+getStat_loop_x_eo_135_r:
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
+    sub x15, x14, x2                // rec[x - i_rec]
+    add x19, x14, x2                // rec[x + i_rec]
+    sub x15, x15, #1                // rec[x - i_rec - 2]
+    add x19, x19, #1                // rec[x + i_rec + 2]
+
+    ld1 {v16.16b}, [x15]        // rec[x - i_rec - 2]
+    ld1 {v17.16b}, [x14]        // rec[x]
+    ld1 {v18.16b}, [x19]        // rec[x + i_rec + 2]
+    ld1 {v0.16b}, [x20]          // org[x]
+    
+    sub v0.16b, v0.16b, v17.16b           //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+
+    cmp x23, x22
+    bne getStat_nomask_eo_135_r
+    add x24, x13, x21, lsl #4
+    ld1 {v31.16b}, [x24]
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+    
+getStat_nomask_eo_135_r:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+    
+    add x23, x23, #16
+    cmp x23, x10
+    blt getStat_loop_x_eo_135_r
+
+    subs x8, x8, #1
+    add x0, x0, x2                      // rec += i_rec
+    add x1, x1, x3                      // org += i_org
+
+    bgt getStat_loop_y_eo_135_r
+
+    // ------- last row -------
+    sub x21, x12, x11
+    and x21, x21, #15
+    sub x22, x12, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+
+    mov x23, x11                          // x = start_x_rn
+
+getStat_loop_x_eo_135_rn:
+    cmp x23, x12
+    bge getStat_loop_x_eo_135_end_rn
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
+    sub x15, x14, x2                // rec[x - i_rec]
+    add x19, x14, x2                // rec[x + i_rec]
+    sub x15, x15, #1                // rec[x - i_rec - 2]
+    add x19, x19, #1                // rec[x + i_rec + 2]
+
+    ld1 {v16.16b}, [x15]        // rec[x - i_rec - 2]
+    ld1 {v17.16b}, [x14]        // rec[x]
+    ld1 {v18.16b}, [x19]        // rec[x + i_rec + 2]
+    ld1 {v0.16b}, [x20]          // org[x]
+
+    sub v0.16b, v0.16b, v17.16b           //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+        
+    cmp x23, x22
+    bne getStat_nomask_eo_135_rn
+    add x24, x13, x21, lsl #4
+    ld1 {v31.16b}, [x24]
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+    
+    getStat_nomask_eo_135_rn:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+
+    add x23, x23, #16
+    b   getStat_loop_x_eo_135_rn
+
+getStat_loop_x_eo_135_end_rn:
+
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+    
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+    
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+    
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+    
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+    
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+    ldp x23, x24, [sp], #16
+    ldp x21, x22, [sp], #16
+    ldp x19, x20, [sp], #16
+
+    ret
+
+/***********************************************************************************************************************************
+ *  void sao_getStatblk_eo_45_arm64(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn, pel_t* uavs3e_sao_mask);
+ *  rec->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pedgetype->x5, lcu_pix_height->x6, start_x_r0->x7, end_x_r0->w8, start_x_r->w9, end_x_r->w10, start_x_rn->w11, end_x_rn->w12
+ ************************************************************************************************************************************/
+function sao_getStatblk_eo_45_arm64
+#if defined(__APPLE__)
+    ldp w8, w9, [sp]
+    ldr w10, [sp, #8]
+    ldr w11, [sp, #12]
+    ldr w12, [sp, #16]
+    ldr x13, [sp, #24]
+
+#else   //未测试
+    ldp x8, x9, [sp]                // start_x_r0 and end_x_r0
+    ldr x10, [sp, #16]              //
+    ldr x11, [sp, #24]
+    ldr x12, [sp, #32]
+    ldr x13, [sp, #40]
+#endif
+
+    sxtw x8, w8                     // end_x_r0
+    sxtw x9, w9                     // start_x_r
+    sxtw x10, w10
+    sxtw x11, w11
+    sxtw x12, w12
+
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+    sub sp, sp, #16
+    stp x21, x22, [sp]
+    sub sp, sp, #16
+    stp x23, x24, [sp]
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
+    movi v1.16b, #0
+    movi v2.16b, #1
+    movi v3.16b, #2
+    movi v4.16b, #3
+    movi v5.16b, #4
+
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
+    
+    // ------- first row -------
+    sub x21, x8, x7
+    and x21, x21, #15
+    sub x22, x8, x21                 // end_x_r0_16 = end_x_r0 - ((end_x_r0 - start_x_r0) & 0x0f
+    
+    mov  x23, x7                     // x = start_x_r0
+
+getStat_loop_x_eo_45_r0:
+    cmp x23, x8
+    bge getStat_loop_x_eo_45_end_r0
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
+    sub x15, x14, x2                // rec[x - i_rec]
+    add x19, x14, x2                // rec[x + i_rec]
+    add x15, x15, #1                // rec[x - i_rec + 2]
+    sub x19, x19, #1                // rec[x + i_rec - 2]
+    
+    ld1 {v16.16b}, [x15]        // rec[x - i_rec - 2]
+    ld1 {v17.16b}, [x14]        // rec[x]
+    ld1 {v18.16b}, [x19]        // rec[x + i_rec + 2]
+    ld1 {v0.16b}, [x20]          // org[x]
+    
+    sub v0.16b, v0.16b, v17.16b           //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+
+    cmp x23, x22
+    bne getStat_nomask_eo_45_r0
+    add x24, x13, x21, lsl #4
+    ld1 {v31.16b}, [x24]
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+    
+getStat_nomask_eo_45_r0:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+    add x23, x23, #16
+    
+    b getStat_loop_x_eo_45_r0
+
+getStat_loop_x_eo_45_end_r0:
+    add x0, x0, x2                      // rec += i_rec
+    add x1, x1, x3                      // org += i_org
+
+    // ------- middle rows -------
+
+    sub x8, x6, #2                     // y = mb_height - 2
+    sub x21, x10, x9
+    and x21, x21, #15
+    sub x22, x10, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+
+getStat_loop_y_eo_45_r:
+    mov x23, x9                          // x = start_x_r
+
+getStat_loop_x_eo_45_r:
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
+    sub x15, x14, x2                // rec[x - i_rec]
+    add x19, x14, x2                // rec[x + i_rec]
+    add x15, x15, #1                // rec[x - i_rec + 2]
+    sub x19, x19, #1                // rec[x + i_rec - 2]
+
+    ld1 {v16.16b}, [x15]        // rec[x - i_rec - 2]
+    ld1 {v17.16b}, [x14]        // rec[x]
+    ld1 {v18.16b}, [x19]        // rec[x + i_rec + 2]
+    ld1 {v0.16b}, [x20]          // org[x]
+    
+    sub v0.16b, v0.16b, v17.16b           //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+
+    cmp x23, x22
+    bne getStat_nomask_eo_45_r
+    add x24, x13, x21, lsl #4
+    ld1 {v31.16b}, [x24]
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+        
+getStat_nomask_eo_45_r:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+    add x23, x23, #16
+    cmp x23, x10
+    blt getStat_loop_x_eo_45_r
+
+    subs x8, x8, #1
+    add x0, x0, x2                      // rec += i_rec
+    add x1, x1, x3                      // org += i_org
+    bgt getStat_loop_y_eo_45_r
+
+    // ------- last row -------
+    sub x21, x12, x11
+
+    and x21, x21, #15
+    sub x22, x12, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+    mov x23, x11                          // x = start_x_rn
+
+getStat_loop_x_eo_45_rn:
+    cmp x23, x12
+    bge getStat_loop_x_eo_45_end_rn
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
+    sub x15, x14, x2                // rec[x - i_rec]
+    add x19, x14, x2                // rec[x + i_rec]
+    add x15, x15, #1                // rec[x - i_rec + 2]
+    sub x19, x19, #1                // rec[x + i_rec - 2]
+
+    ld1 {v16.16b}, [x15]        // rec[x - i_rec - 2]
+    ld1 {v17.16b}, [x14]        // rec[x]
+    ld1 {v18.16b}, [x19]        // rec[x + i_rec + 2]
+    ld1 {v0.16b}, [x20]          // org[x]
+    
+    sub v0.16b, v0.16b, v17.16b           //pdiff
+    
+    // leftsign & rightsign
+    umin v19.16b, v16.16b, v17.16b
+    umin v20.16b, v17.16b, v18.16b
+    
+    cmeq v21.16b, v19.16b, v16.16b
+    cmeq v22.16b, v19.16b, v17.16b
+    cmeq v23.16b, v20.16b, v17.16b
+    cmeq v24.16b, v20.16b, v18.16b
+    
+    sub  v20.16b, v22.16b, v21.16b      // leftsign
+    sub  v22.16b, v23.16b, v24.16b      // rightsign
+    
+    // get edgetype
+    add v20.16b, v22.16b, v20.16b       // edgetype
+    add v20.16b, v20.16b, v3.16b
+
+    cmp x23, x22
+    bne getStat_nomask_eo_45_rn
+    add x24, x13, x21, lsl #4
+    ld1 {v31.16b}, [x24]
+    movi v25.16b, #5
+    and v31.16b, v25.16b, v31.16b
+    add v20.16b, v20.16b, v31.16b
+    
+getStat_nomask_eo_45_rn:
+    //edgetype[0] diff[0]
+    cmeq v21.16b, v20.16b, v1.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v22.8h
+    
+    //edgetype[1] diff[1]
+    cmeq v21.16b, v20.16b, v2.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v22.8h
+    
+    //edgetype[2] diff[2]
+    cmeq v21.16b, v20.16b, v3.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v22.8h
+    
+    //edgetype[3] diff[3]
+    cmeq v21.16b, v20.16b, v4.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v22.8h
+    
+    //edgetype[4] diff[4]
+    cmeq v21.16b, v20.16b, v5.16b
+    and v22.16b, v21.16b, v0.16b
+    saddlp v21.8h, v21.16b
+    saddlp v22.8h, v22.16b
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v22.8h
+    
+    add x23, x23, #16
+    b   getStat_loop_x_eo_45_rn
+
+getStat_loop_x_eo_45_end_rn:
+
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+    
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+    
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+    
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+    
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+    
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+    ldp x23, x24, [sp], #16
+    ldp x21, x22, [sp], #16
+    ldp x19, x20, [sp], #16
+
+    ret
+
+
 #else // COMPILE_10BIT == 1
 
 /***********************************************************************************************************************************
@@ -1525,50 +2611,64 @@ test_loop_x_eo_45_end_rn:
     ret
 
 /***********************************************************************************************************************************
-*   void sao_getStatblk_eo_0_arm64(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, char_t* pedgetype, int start_x, int end_x, int end_y, pel_t* mask);
+*   void sao_getStatblk_eo_0_arm64(pel_t* rec, pel_t* org, int i_rec, int i_org, i32s_t* pdiff, i32s_t* pedgetype, int start_x, int end_x, int end_y, pel_t* mask);
 *  src->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pdegetype->x5, start_x->x6, end_x->x7, end_y->w8, mask->x9
 ************************************************************************************************************************************/
 function sao_getStatblk_eo_0_arm64
-    ldr w8, [sp]                // end_y
-    sub sp, sp, #16
-    stp x19, x20, [sp]
+    mov x10, sp
+    ldr x8, [x10], #8
+    ldr x9, [x10]
 
-    sub x10, x7, x6             // width = end_x - start_x
-    
-    mov x20, x10
-    lsl x20, x20, #1
-    
-    movi v0.8h, #2
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
 
+    sub x10, x7, x6                 // width = end_x - start_x
+
+    // ------- load mask -------
+    and x11, x10, #15
+    add x12, x9, x11, lsl #5
+    ld1 {v30.8h, v31.8h}, [x12]     // mask + ((end_x - start_x) & 0x0f) * 16 * sizeof(pel)
+
+    sub x10, x7, x11                // end_x_16 = end_x - ((end_x - start_x) & 0x0f)
+    
     lsl x2, x2, #1
     lsl x3, x3, #1
     lsl x7, x7, #1              //end_x
     lsl x6, x6, #1              //start_x
-    lsl x10, x10, #1            //end_x - start_x
+    lsl x10, x10, #1            //end_x_16
+    
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
 
 getStat_loop_y_eo_0:
 
-    mov x9, x6                  // x = start_x
+    mov x15, x6                  // x = start_x
 getStat_loop_x_eo_0:
 
-    add x12, x0, x9             //rec
+    add x12, x0, x15             //rec
     sub x13, x12, #2
     add x14, x12, #2
-    add x11, x1, x9             //org
-    add x15, x4, x9             //pdiff
-    add x19, x5, x9             //pedgetype
+    add x11, x1, x15             //org
 
     ld1 {v16.8h, v17.8h}, [x13]        // rec[x-1]
     ld1 {v18.8h, v19.8h}, [x12]        // rec[x]
     ld1 {v20.8h, v21.8h}, [x14]        // rec[x+1]
     
-    ld1 {v1.8h, v2.8h}, [x11]
+    ld1 {v0.8h, v1.8h}, [x11]
     
-    sub v1.8h, v1.8h, v18.8h
-    sub v2.8h, v2.8h, v19.8h
+    sub v0.8h, v0.8h, v18.8h
+    sub v1.8h, v1.8h, v19.8h           //pdiff
     
-    st1 {v1.8h, v2.8h}, [x15]
-
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
     umin v3.8h, v17.8h, v19.8h
@@ -1592,23 +2692,111 @@ getStat_loop_x_eo_0:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    movi v21.8h, #2
+    add v16.8h, v16.8h, v21.8h
+    add v17.8h, v17.8h, v21.8h
     
-    st1 {v16.8h, v17.8h}, [x19]
+    cmp x15, x10
+    bne getStat_nomask_eo_0
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
+
+getStat_nomask_eo_0:
+    //edgetype[0] diff[0]
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
     
-    add x9, x9, #32
-    cmp x9, x7
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
+
+    add x15, x15, #32
+    cmp x15, x7
     blt getStat_loop_x_eo_0
 
     subs w8, w8, #1
     add x0, x0, x2
     add x1, x1, x3
-    add x4, x4, x20
-    add x5, x5, x20
     bgt getStat_loop_y_eo_0
 
-    ldp x19, x20, [sp], #16
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
 
     ret
 
@@ -1618,18 +2806,47 @@ getStat_loop_x_eo_0:
  ************************************************************************************************************************************/
 function sao_getStatblk_eo_90_arm64
     ldr w8, [sp]
-    sub sp, sp, #16
-    stp x19, x20, [sp]
+
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
+    and x15, x6, #15
 
     lsl x2, x2, #1          // i_rec
     lsl x3, x3, #1          // i_org
     lsl x6, x6, #1          // end_x
 
-    sub x10, x6, #30            // end_x_16 = (mb_width - 15)*sizeof(pel)
-
-    movi v0.8h, #2
+    sub x10, x6, #30            // end_x_16 = (mb_width - 15) * sizeof(pel)
 
     sub  w8, w8, w7             // y = end_y - start_y
+
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
+
+    mov x9, #-1
+    cmp x15, #4
+    beq getStat_set_mask_width_4
+    cmp x15, #0
+    beq getStat_loop_y_eo_90
+    movi v30.4s, #0
+    movi v31.4s, #0             // v30.8h: "0, 0, 0, 0, 0, 0, 0, 0"
+    mov v31.d[1], x9           // v31.8h: "0, 0, 0, 0, -1, -1, -1, -1"
+    b getStat_loop_y_eo_90
+    
+getStat_set_mask_width_4:
+    movi v30.4s, #0
+    mov  v30.d[1], x9           // v30.8h: "0, 0, 0, 0, -1, -1, -1, -1"
+    movi v31.16b, #255             // v31.8h: "-1, -1, -1, -1, -1, -1, -1, -1"
 
 getStat_loop_y_eo_90:
 
@@ -1640,17 +2857,17 @@ getStat_loop_x_eo_90:
     sub  x13, x12, x2
     add  x14, x12, x2
     add x11, x1, x9             // org
-    add x15, x4, x9             // pdiff
-    add x19, x5, x9             // pedgetype
+    //add x15, x4, x9             // pdiff
+    //add x19, x5, x9             // pedgetype
 
     ld1  {v18.8h, v19.8h}, [x12]        // rec[x]
     ld1  {v16.8h, v17.8h}, [x13]        // rec[x-src_stride]
     ld1  {v20.8h, v21.8h}, [x14]        // rec[x+src_stride]
     
-    ld1 {v1.8h, v2.8h}, [x11]
-    sub v1.8h, v1.8h, v18.8h
-    sub v2.8h, v2.8h, v19.8h            //pdiff
-    st1 {v1.8h, v2.8h}, [x15]
+    ld1 {v0.8h, v1.8h}, [x11]
+    sub v0.8h, v0.8h, v18.8h
+    sub v1.8h, v1.8h, v19.8h            //pdiff
+    //st1 {v1.8h, v2.8h}, [x15]
     
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
@@ -1675,10 +2892,74 @@ getStat_loop_x_eo_90:
     // get edgetype
     add v16.8h, v16.8h, v20.8h
     add v17.8h, v17.8h, v21.8h
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    movi v21.8h, #2
+    add v16.8h, v16.8h, v21.8h
+    add v17.8h, v17.8h, v21.8h
     
-    st1 {v16.8h, v17.8h}, [x19]         //pedgetype
+    //st1 {v16.8h, v17.8h}, [x19]         //pedgetype
+    cmp x9, x10
+    blt getStat_nomask_eo_90
+    
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
+
+getStat_nomask_eo_90:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
 
     add x9, x9, #32
     cmp x9, x6
@@ -1687,17 +2968,44 @@ getStat_loop_x_eo_90:
     subs w8, w8, #1
     add x0, x0, x2
     add x1, x1, x3
-    add x4, x4, x6
-    add x5, x5, x6
+    //add x4, x4, x6
+    //add x5, x5, x6
     bgt getStat_loop_y_eo_90
 
-    ldp x19, x20, [sp], #16
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+    
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+    
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+    
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
 
     ret
 
 /***********************************************************************************************************************************
  *  void sao_getStatblk_eo_135_arm64(pel_t* rec, pel_t* org, int i_rec, int i_org, i16s_t* pdiff, i16u_t* pedgetype, int lcu_pix_height, int start_x_r0, int end_x_r0, int start_x_r, int end_x_r, int start_x_rn, int end_x_rn, pel_t* uavs3e_sao_mask);
- *  rec->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pedgetype->x5, lcu_pix_height->x6, start_x_r0->x7, end_x_r0->w8, start_x_r->w9, end_x_r->w10, start_x_rn->w11, end_x_rn->w12
+ *  rec->x0, org->x1, i_rec->x2, i_org->x3, pdiff->x4, pedgetype->x5, lcu_pix_height->x6, start_x_r0->x7, end_x_r0->w8, start_x_r->w9, end_x_r->w10, start_x_rn->w11, end_x_rn->w12, mask->x13
  ************************************************************************************************************************************/
 function sao_getStatblk_eo_135_arm64
 #if defined(__APPLE__)
@@ -1705,44 +3013,63 @@ function sao_getStatblk_eo_135_arm64
     ldr w10, [sp, #8]
     ldr w11, [sp, #12]
     ldr w12, [sp, #16]
+    ldr x13, [sp, #24]
+
 #else   //未测试
     ldp x8, x9, [sp]                // start_x_r0 and end_x_r0
     ldr x10, [sp, #16]              //
     ldr x11, [sp, #24]
     ldr x12, [sp, #32]
+    ldr x13, [sp, #40]
 #endif
-    sub sp, sp, #16
-    stp x19, x20, [sp]
-    sub sp, sp, #16
-    stp x21, x22, [sp]
-    
-    sxtw x8, w8                     // start_x_r0
-    sxtw x9, w9                     // end_x_r0
+
+    sxtw x8, w8                     // end_x_r0
+    sxtw x9, w9                     // start_x_r
     sxtw x10, w10
     sxtw x11, w11
     sxtw x12, w12
 
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+    sub sp, sp, #16
+    stp x21, x22, [sp]
+    sub sp, sp, #16
+    stp x23, x24, [sp]
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
     lsl x2, x2, #1
     lsl x3, x3, #1
-    lsl x7, x7, #1
-    lsl x8, x8, #1
-    lsl x9, x9, #1
-    lsl x10, x10, #1
-    lsl x11, x11, #1
-    lsl x12, x12, #1
 
-    movi v0.8h, #2
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
 
     // ------- first row -------
-    mov  x13, x7                     // x = start_x_r0
+    sub x21, x8, x7
+    and x21, x21, #15
+    sub x22, x8, x21                 // end_x_r0_16 = end_x_r0 - ((end_x_r0 - start_x_r0) & 0x0f
+
+    lsl x7, x7, #1
+    lsl x8, x8, #1
+    lsl x22, x22, #1
+
+    mov  x23, x7                     // x = start_x_r0
 
 getStat_loop_x_eo_135_r0:
-    cmp x13, x8
+    cmp x23, x8
     bge getStat_loop_x_eo_135_end_r0
-    add x14, x0, x13                // rec[x]
-    add x20, x1, x13                // org[x]
-    add x21, x4, x13                // pdiff
-    add x22, x5, x13                // pedge
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
     sub x15, x14, x2                // rec[x - i_rec]
     add x19, x14, x2                // rec[x + i_rec]
     sub x15, x15, #2                // rec[x - i_rec - 2]
@@ -1751,13 +3078,11 @@ getStat_loop_x_eo_135_r0:
     ld1 {v16.8h, v17.8h}, [x15]        // rec[x - i_rec - 2]
     ld1 {v18.8h, v19.8h}, [x14]        // rec[x]
     ld1 {v20.8h, v21.8h}, [x19]        // rec[x + i_rec + 2]
-    ld1 {v6.8h, v7.8h}, [x20]          // org[x]
+    ld1 {v0.8h, v1.8h}, [x20]          // org[x]
     
-    sub v6.8h, v6.8h, v18.8h            //pdiff
-    sub v7.8h, v7.8h, v19.8h
+    sub v0.8h, v0.8h, v18.8h            //pdiff
+    sub v1.8h, v1.8h, v19.8h
     
-    st1 {v6.8h, v7.8h}, [x21]
-
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
     umin v3.8h, v17.8h, v19.8h
@@ -1781,33 +3106,100 @@ getStat_loop_x_eo_135_r0:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
+    movi v18.8h, #2
+    add v16.8h, v16.8h, v18.8h
+    add v17.8h, v17.8h, v18.8h
 
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    cmp x23, x22
+    bne getStat_nomask_eo_135_r0
+    add x24, x13, x21, lsl #5
+    ld1 {v30.8h, v31.8h}, [x24]
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
     
-    st1 {v16.8h, v17.8h}, [x22]
-    add x13, x13, #32
+getStat_nomask_eo_135_r0:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
+    add x23, x23, #32
     
     b getStat_loop_x_eo_135_r0
 
 getStat_loop_x_eo_135_end_r0:
     add x0, x0, x2                      // rec += i_rec
     add x1, x1, x3                      // org += i_org
-    add x4, x4, #72
-    add x5, x5, #72
 
     // ------- middle rows -------
 
     sub x8, x6, #2                     // y = mb_height - 2
 
+    sub x21, x10, x9
+    and x21, x21, #15
+    sub x22, x10, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+    
+    lsl x9, x9, #1
+    lsl x10, x10, #1
+    lsl x22, x22, #1
+
 getStat_loop_y_eo_135_r:
-    mov x13, x9                          // x = start_x_r
+    mov x23, x9                          // x = start_x_r
 
 getStat_loop_x_eo_135_r:
-    add x14, x0, x13                // rec[x]
-    add x20, x1, x13                // org[x]
-    add x21, x4, x13                // pdiff
-    add x22, x5, x13                // pedge
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
     sub x15, x14, x2                // rec[x - i_rec]
     add x19, x14, x2                // rec[x + i_rec]
     sub x15, x15, #2                // rec[x - i_rec - 2]
@@ -1816,13 +3208,11 @@ getStat_loop_x_eo_135_r:
     ld1  {v16.8h, v17.8h}, [x15]        // rec[x - i_rec - 2]
     ld1  {v18.8h, v19.8h}, [x14]        // rec[x]
     ld1  {v20.8h, v21.8h}, [x19]        // rec[x + i_rec + 2]
-    ld1 {v6.8h, v7.8h}, [x20]          // org[x]
+    ld1 {v0.8h, v1.8h}, [x20]          // org[x]
     
-    sub v6.8h, v6.8h, v18.8h            //pdiff
-    sub v7.8h, v7.8h, v19.8h
+    sub v0.8h, v0.8h, v18.8h            //pdiff
+    sub v1.8h, v1.8h, v19.8h
     
-    st1 {v6.8h, v7.8h}, [x21]
-
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
     umin v3.8h, v17.8h, v19.8h
@@ -1846,33 +3236,103 @@ getStat_loop_x_eo_135_r:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
-
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    movi v18.8h, #2
+    add v16.8h, v16.8h, v18.8h
+    add v17.8h, v17.8h, v18.8h
     
-    st1 {v16.8h, v17.8h}, [x22]
+    //st1 {v16.8h, v17.8h}, [x22]
 
-    add x13, x13, #32
-    cmp x13, x10
+    cmp x23, x22
+    bne getStat_nomask_eo_135_r
+    add x24, x13, x21, lsl #5
+    ld1 {v30.8h, v31.8h}, [x24]
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
+    
+getStat_nomask_eo_135_r:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
+    
+    add x23, x23, #32
+    cmp x23, x10
     blt getStat_loop_x_eo_135_r
 
     subs x8, x8, #1
     add x0, x0, x2                      // rec += i_rec
     add x1, x1, x3                      // org += i_org
-    add x4, x4, #72
-    add x5, x5, #72
+
     bgt getStat_loop_y_eo_135_r
 
     // ------- last row -------
-    mov x13, x11                          // x = start_x_rn
+    sub x21, x12, x11
+    and x21, x21, #15
+    sub x22, x12, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+    
+    lsl x11, x11, #1
+    lsl x12, x12, #1
+    lsl x22, x22, #1
+
+    mov x23, x11                          // x = start_x_rn
 
 getStat_loop_x_eo_135_rn:
-    cmp x13, x12
+    cmp x23, x12
     bge getStat_loop_x_eo_135_end_rn
-    add x14, x0, x13                // rec[x]
-    add x20, x1, x13                // org[x]
-    add x21, x4, x13                // pdiff
-    add x22, x5, x13                // pedge
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
     sub x15, x14, x2                // rec[x - i_rec]
     add x19, x14, x2                // rec[x + i_rec]
     sub x15, x15, #2                // rec[x - i_rec - 2]
@@ -1881,12 +3341,10 @@ getStat_loop_x_eo_135_rn:
     ld1 {v16.8h, v17.8h}, [x15]        // rec[x - i_rec - 2]
     ld1 {v18.8h, v19.8h}, [x14]        // rec[x]
     ld1 {v20.8h, v21.8h}, [x19]        // rec[x + i_rec + 2]
-    ld1 {v6.8h, v7.8h}, [x20]          // org[x]
+    ld1 {v0.8h, v1.8h}, [x20]          // org[x]
 
-    sub v6.8h, v6.8h, v18.8h            //pdiff
-    sub v7.8h, v7.8h, v19.8h
-
-    st1 {v6.8h, v7.8h}, [x21]
+    sub v0.8h, v0.8h, v18.8h            //pdiff
+    sub v1.8h, v1.8h, v19.8h
 
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
@@ -1911,16 +3369,109 @@ getStat_loop_x_eo_135_rn:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
-
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    movi v18.8h, #2
+    add v16.8h, v16.8h, v18.8h
+    add v17.8h, v17.8h, v18.8h
     
-    st1 {v16.8h, v17.8h}, [x22]
+    cmp x23, x22
+    bne getStat_nomask_eo_135_rn
+    add x24, x13, x21, lsl #5
+    ld1 {v30.8h, v31.8h}, [x24]
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
+    
+    getStat_nomask_eo_135_rn:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
 
-    add x13, x13, #32
+    add x23, x23, #32
     b   getStat_loop_x_eo_135_rn
 
 getStat_loop_x_eo_135_end_rn:
+
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+    
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+    
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+    
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+    
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+    
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+    ldp x23, x24, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x19, x20, [sp], #16
 
@@ -1936,44 +3487,63 @@ function sao_getStatblk_eo_45_arm64
     ldr w10, [sp, #8]
     ldr w11, [sp, #12]
     ldr w12, [sp, #16]
+    ldr x13, [sp, #24]
+
 #else   //未测试
     ldp x8, x9, [sp]                // start_x_r0 and end_x_r0
     ldr x10, [sp, #16]              //
     ldr x11, [sp, #24]
     ldr x12, [sp, #32]
+    ldr x13, [sp, #40]
 #endif
-    sub sp, sp, #16
-    stp x19, x20, [sp]
-    sub sp, sp, #16
-    stp x21, x22, [sp]
-    
-    sxtw x8, w8                     // start_x_r0
-    sxtw x9, w9                     // end_x_r0
+
+    sxtw x8, w8                     // end_x_r0
+    sxtw x9, w9                     // start_x_r
     sxtw x10, w10
     sxtw x11, w11
     sxtw x12, w12
 
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+    sub sp, sp, #16
+    stp x21, x22, [sp]
+    sub sp, sp, #16
+    stp x23, x24, [sp]
+    sub sp, sp, #64
+    st1 {v8.8h - v11.8h}, [sp]
+    sub sp, sp, #64
+    st1 {v12.8h - v15.8h}, [sp]
+
     lsl x2, x2, #1
     lsl x3, x3, #1
+
+    movi v6.8h, #0
+    movi v7.8h, #0
+    movi v8.8h, #0
+    movi v9.8h, #0
+    movi v10.8h, #0
+    movi v11.8h, #0
+    movi v12.8h, #0
+    movi v13.8h, #0
+    movi v14.8h, #0
+    movi v15.8h, #0
+    
+    // ------- first row -------
+    sub x21, x8, x7
+    and x21, x21, #15
+    sub x22, x8, x21                 // end_x_r0_16 = end_x_r0 - ((end_x_r0 - start_x_r0) & 0x0f
+    
     lsl x7, x7, #1
     lsl x8, x8, #1
-    lsl x9, x9, #1
-    lsl x10, x10, #1
-    lsl x11, x11, #1
-    lsl x12, x12, #1
-
-    movi v0.8h, #2
-
-    // ------- first row -------
-    mov  x13, x7                     // x = start_x_r0
+    lsl x22, x22, #1
+    
+    mov  x23, x7                     // x = start_x_r0
 
 getStat_loop_x_eo_45_r0:
-    cmp x13, x8
+    cmp x23, x8
     bge getStat_loop_x_eo_45_end_r0
-    add x14, x0, x13                // rec[x]
-    add x20, x1, x13                // org[x]
-    add x21, x4, x13                // pdiff
-    add x22, x5, x13                // pedge
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
     sub x15, x14, x2                // rec[x - i_rec]
     add x19, x14, x2                // rec[x + i_rec]
     add x15, x15, #2                // rec[x - i_rec + 2]
@@ -1982,13 +3552,11 @@ getStat_loop_x_eo_45_r0:
     ld1 {v16.8h, v17.8h}, [x15]        // rec[x - i_rec + 2]
     ld1 {v18.8h, v19.8h}, [x14]        // rec[x]
     ld1 {v20.8h, v21.8h}, [x19]        // rec[x + i_rec - 2]
-    ld1 {v6.8h, v7.8h}, [x20]          // org[x]
+    ld1 {v0.8h, v1.8h}, [x20]          // org[x]
     
-    sub v6.8h, v6.8h, v18.8h            //pdiff
-    sub v7.8h, v7.8h, v19.8h
+    sub v0.8h, v0.8h, v18.8h            //pdiff
+    sub v1.8h, v1.8h, v19.8h
     
-    st1 {v6.8h, v7.8h}, [x21]
-
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
     umin v3.8h, v17.8h, v19.8h
@@ -2012,33 +3580,99 @@ getStat_loop_x_eo_45_r0:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
+    movi v20.8h, #2
+    add v16.8h, v16.8h, v20.8h
+    add v17.8h, v17.8h, v20.8h
 
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    cmp x23, x22
+    bne getStat_nomask_eo_45_r0
+    add x24, x13, x21, lsl #5
+    ld1 {v30.8h, v31.8h}, [x24]
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
     
-    st1 {v16.8h, v17.8h}, [x22]
-    add x13, x13, #32
+getStat_nomask_eo_45_r0:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
+    add x23, x23, #32
     
     b getStat_loop_x_eo_45_r0
 
 getStat_loop_x_eo_45_end_r0:
     add x0, x0, x2                      // rec += i_rec
     add x1, x1, x3                      // org += i_org
-    add x4, x4, #72
-    add x5, x5, #72
 
     // ------- middle rows -------
 
     sub x8, x6, #2                     // y = mb_height - 2
+    sub x21, x10, x9
+    and x21, x21, #15
+    sub x22, x10, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+    
+    lsl x9, x9, #1
+    lsl x10, x10, #1
+    lsl x22, x22, #1
 
 getStat_loop_y_eo_45_r:
-    mov x13, x9                          // x = start_x_r
+    mov x23, x9                          // x = start_x_r
 
 getStat_loop_x_eo_45_r:
-    add x14, x0, x13                // rec[x]
-    add x20, x1, x13                // org[x]
-    add x21, x4, x13                // pdiff
-    add x22, x5, x13                // pedge
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
     sub x15, x14, x2                // rec[x - i_rec]
     add x19, x14, x2                // rec[x + i_rec]
     add x15, x15, #2                // rec[x - i_rec + 2]
@@ -2047,13 +3681,11 @@ getStat_loop_x_eo_45_r:
     ld1  {v16.8h, v17.8h}, [x15]        // rec[x - i_rec + 2]
     ld1  {v18.8h, v19.8h}, [x14]        // src[x]
     ld1  {v20.8h, v21.8h}, [x19]        // rec[x + i_rec - 2]
-    ld1 {v6.8h, v7.8h}, [x20]          // org[x]
+    ld1 {v0.8h, v1.8h}, [x20]          // org[x]
     
-    sub v6.8h, v6.8h, v18.8h            //pdiff
-    sub v7.8h, v7.8h, v19.8h
+    sub v0.8h, v0.8h, v18.8h            //pdiff
+    sub v1.8h, v1.8h, v19.8h
     
-    st1 {v6.8h, v7.8h}, [x21]
-
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
     umin v3.8h, v17.8h, v19.8h
@@ -2077,33 +3709,99 @@ getStat_loop_x_eo_45_r:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
+    movi v20.8h, #2
+    add v16.8h, v16.8h, v20.8h
+    add v17.8h, v17.8h, v20.8h
 
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    cmp x23, x22
+    bne getStat_nomask_eo_45_r
+    add x24, x13, x21, lsl #5
+    ld1 {v30.8h, v31.8h}, [x24]
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
     
-    st1 {v16.8h, v17.8h}, [x22]
-
-    add x13, x13, #32
-    cmp x13, x10
+    getStat_nomask_eo_45_r:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
+    
+    add x23, x23, #32
+    cmp x23, x10
     blt getStat_loop_x_eo_45_r
 
     subs x8, x8, #1
     add x0, x0, x2                      // rec += i_rec
     add x1, x1, x3                      // org += i_org
-    add x4, x4, #72
-    add x5, x5, #72
     bgt getStat_loop_y_eo_45_r
 
     // ------- last row -------
-    mov x13, x11                          // x = start_x_rn
+    sub x21, x12, x11
+
+    and x21, x21, #15
+    sub x22, x12, x21                 // end_x_r_16 = end_x_r - ((end_x_r - start_x_r) & 0x0f
+    lsl x11, x11, #1
+    lsl x12, x12, #1
+    lsl x22, x22, #1
+    mov x23, x11                          // x = start_x_rn
 
 getStat_loop_x_eo_45_rn:
-    cmp x13, x12
+    cmp x23, x12
     bge getStat_loop_x_eo_45_end_rn
-    add x14, x0, x13                // rec[x]
-    add x20, x1, x13                // org[x]
-    add x21, x4, x13                // pdiff
-    add x22, x5, x13                // pedge
+    add x14, x0, x23                // rec[x]
+    add x20, x1, x23                // org[x]
     sub x15, x14, x2                // rec[x - i_rec]
     add x19, x14, x2                // rec[x + i_rec]
     add x15, x15, #2                // rec[x - i_rec + 2]
@@ -2112,12 +3810,10 @@ getStat_loop_x_eo_45_rn:
     ld1 {v16.8h, v17.8h}, [x15]        // rec[x - i_rec + 2]
     ld1 {v18.8h, v19.8h}, [x14]        // rec[x]
     ld1 {v20.8h, v21.8h}, [x19]        // rec[x + i_rec - 2]
-    ld1 {v6.8h, v7.8h}, [x20]          // org[x]
+    ld1 {v0.8h, v1.8h}, [x20]          // org[x]
 
-    sub v6.8h, v6.8h, v18.8h            //pdiff
-    sub v7.8h, v7.8h, v19.8h
-
-    st1 {v6.8h, v7.8h}, [x21]
+    sub v0.8h, v0.8h, v18.8h            //pdiff
+    sub v1.8h, v1.8h, v19.8h
 
     // leftsign & rightsign
     umin v2.8h, v16.8h, v18.8h
@@ -2142,16 +3838,109 @@ getStat_loop_x_eo_45_rn:
     // get edgetype
     add v16.8h, v16.8h, v20.8h          // edgetype
     add v17.8h, v17.8h, v21.8h
+    movi v20.8h, #2
+    add v16.8h, v16.8h, v20.8h
+    add v17.8h, v17.8h, v20.8h
 
-    add v16.8h, v16.8h, v0.8h
-    add v17.8h, v17.8h, v0.8h
+    cmp x23, x22
+    bne getStat_nomask_eo_45_rn
+    add x24, x13, x21, lsl #5
+    ld1 {v30.8h, v31.8h}, [x24]
+    movi v25.8h, #5
+    and v30.16b, v25.16b, v30.16b
+    and v31.16b, v25.16b, v31.16b
+    add v16.8h, v16.8h, v30.8h
+    add v17.8h, v17.8h, v31.8h
     
-    st1 {v16.8h, v17.8h}, [x22]
-
-    add x13, x13, #32
+    getStat_nomask_eo_45_rn:
+    movi v25.8h, #0
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v6.8h, v6.8h, v21.8h
+    add v7.8h, v7.8h, v23.8h
+    
+    //edgetype[1] diff[1]
+    movi v25.8h, #1
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v8.8h, v8.8h, v21.8h
+    add v9.8h, v9.8h, v23.8h
+    
+    //edgetype[2] diff[2]
+    movi v25.8h, #2
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v10.8h, v10.8h, v21.8h
+    add v11.8h, v11.8h, v23.8h
+    
+    //edgetype[3] diff[3]
+    movi v25.8h, #3
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v12.8h, v12.8h, v21.8h
+    add v13.8h, v13.8h, v23.8h
+    
+    //edgetype[4] diff[4]
+    movi v25.8h, #4
+    cmeq v21.8h, v16.8h, v25.8h
+    cmeq v22.8h, v17.8h, v25.8h
+    and v23.16b, v21.16b, v0.16b
+    and v24.16b, v22.16b, v1.16b
+    add v21.8h, v21.8h, v22.8h
+    add v23.8h, v23.8h, v24.8h
+    add v14.8h, v14.8h, v21.8h
+    add v15.8h, v15.8h, v23.8h
+    
+    add x23, x23, #32
     b   getStat_loop_x_eo_45_rn
 
 getStat_loop_x_eo_45_end_rn:
+
+    addp v6.8h, v6.8h, v8.8h
+    addp v10.8h, v10.8h, v12.8h
+    addp v6.8h, v6.8h, v10.8h
+    saddlp v6.4s, v6.8h
+    neg v6.4s, v6.4s
+    
+    addp v7.8h, v7.8h, v9.8h
+    addp v11.8h, v11.8h, v13.8h
+    addp v7.8h, v7.8h, v11.8h
+    saddlp v7.4s, v7.8h
+    
+    addp v14.8h, v14.8h, v14.8h
+    addp v14.8h, v14.8h, v14.8h
+    saddlp v14.4s, v14.8h
+    neg v14.4s, v14.4s
+    
+    addp v15.8h, v15.8h, v15.8h
+    addp v15.8h, v15.8h, v15.8h
+    saddlp v15.4s, v15.8h
+    
+    st1 {v7.4s}, [x4], #16
+    st1 {v15.s}[0], [x4]
+    
+    st1 {v6.4s}, [x5], #16
+    st1 {v14.s}[0], [x5]
+    
+    ld1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64
+    ld1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
+    ldp x23, x24, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x19, x20, [sp], #16
 

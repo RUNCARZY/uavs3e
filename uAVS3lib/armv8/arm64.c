@@ -52,7 +52,7 @@ void com_funs_init_arm64()
     g_funs_handle.add_inv_trans[4] = add_inv_trans_32x32_arm64;
     
     g_funs_handle.sub_trans[1] = sub_trans_4x4_arm64;
-    g_funs_handle.sub_trans[2] = sub_trans_8x8_arm64;
+    g_funs_handle.sub_trans[2] = sub_trans_8x8_arm64_8bit;
     g_funs_handle.sub_trans[3] = sub_trans_16x16_arm64;
     g_funs_handle.sub_trans[4] = sub_trans_32x32_arm64;
     
@@ -71,13 +71,16 @@ void com_funs_init_arm64()
     g_funs_handle.intra_pred_dc    = xPredIntraDCAdi_arm64;
     g_funs_handle.intra_pred_bi    = xPredIntraBiAdi_arm64;
     
-    //g_funs_handle.sao_flt[0] = sao_getStatblk_arm64;
+    g_funs_handle.sao_flt[0] = sao_getStatblk_arm64;
     g_funs_handle.sao_flt[1] = sao_on_lcu_arm64;
     
     g_funs_handle.deblk_luma[0] = deblock_ver_luma_arm64;
     g_funs_handle.deblk_luma[1] = deblock_hor_luma_arm64;
     g_funs_handle.deblk_chroma[0] = deblock_ver_chroma_arm64;
     g_funs_handle.deblk_chroma[1] = deblock_hor_chroma_arm64;
+    
+    g_funs_handle.quant         = quant_normal_arm64;
+    g_funs_handle.inv_quant     = inv_quant_normal_arm64;
 
 #else
     g_funs_handle.cost_sad[2] = xGetSAD8_arm64;
@@ -132,6 +135,11 @@ void com_funs_init_arm64()
     g_funs_handle.sub_trans[3] = sub_trans_16x16_arm64;
     g_funs_handle.sub_trans[4] = sub_trans_32x32_arm64;
     
+    g_funs_handle.add_inv_trans_ext[4] = add_inv_trans_32x32_arm64;
+    g_funs_handle.sub_trans_ext[4] = sub_trans_32x32_arm64;
+    
+    g_funs_handle.get_nz_num = get_nz_num_arm64;
+    
     g_funs_handle.pix_sub[0] = pix_sub_4_arm64;
     g_funs_handle.pix_sub[1] = pix_sub_8_arm64;
     g_funs_handle.pix_add[1] = pix_add_8_arm64;
@@ -146,7 +154,7 @@ void com_funs_init_arm64()
     g_funs_handle.intra_pred_dc    = xPredIntraDCAdi_arm64;
     //g_funs_handle.intra_pred_bi    = xPredIntraBiAdi_arm64;
     
-    //g_funs_handle.sao_flt[0] = sao_getStatblk_arm64;
+    g_funs_handle.sao_flt[0] = sao_getStatblk_arm64;
     g_funs_handle.sao_flt[1] = sao_on_lcu_arm64;
     
     g_funs_handle.deblk_luma[0] = deblock_ver_luma_arm64;
@@ -154,6 +162,8 @@ void com_funs_init_arm64()
     g_funs_handle.deblk_chroma[0] = deblock_ver_chroma_arm64;
     g_funs_handle.deblk_chroma[1] = deblock_hor_chroma_arm64;
     
+    g_funs_handle.quant         = quant_normal_arm64;
+    g_funs_handle.inv_quant     = inv_quant_normal_arm64;
 #endif
 
 }
