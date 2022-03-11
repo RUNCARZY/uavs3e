@@ -71,6 +71,7 @@ void com_funs_init_intrinsic_functions_10bit();
 void com_funs_init_intrinsic_functions_avx2();
 void com_funs_init_intrinsic_functions_avx2_10bit();
 void com_funs_init_intrinsic_functions_avx512_10bit();
+void com_funs_init_arm64();
 
 int simd_avx_level(int* phwavx);
 

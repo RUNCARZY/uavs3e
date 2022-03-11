@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include "threadpool.h"
+#if defined(__APPLE__) && (defined(__arm64__) || defined(__ARM_NEON__))
+#include <unistd.h>
+#endif
 
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
@@ -246,7 +249,7 @@ void avs3_threadpool_set_affinity(avs3_threadpool_t *pool, void* mask)
 {
     int i;
     for (i = 0; i < pool->threads; i++) {
-#if !defined(_WIN32) && defined(__GNUC__)
+#if !defined(_WIN32) && defined(__GNUC__) && !defined(__APPLE__)
         pthread_setaffinity_np(pool->thread_handle[i], sizeof(cpu_set_t), (cpu_set_t*)mask);
 #endif
     }
