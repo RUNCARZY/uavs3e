@@ -95,7 +95,7 @@ void* avs3gop_lib_create(cfg_param_t *input, strm_out_t strm_callbak, rec_out_t 
     g->objs         = objs;
     g->obj_list     = com_malloc(sizeof(avs3gop_enc_t) * objs, 1);
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__APPLE__)
     cpu_set_t mask_bak;
     CPU_ZERO(&mask_bak);
     pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_bak);
@@ -105,7 +105,7 @@ void* avs3gop_lib_create(cfg_param_t *input, strm_out_t strm_callbak, rec_out_t 
         avs3gop_enc_t *e = &g->obj_list[i];
         cfg_param_t tmp_input = *input;
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__APPLE__)
         pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*)masks[i]);
 #endif
         e->enc = avs3_lib_create(&tmp_input, avs3gop_strm_callback, avs3gop_rec_callback, input->intra_period * 8 + 3, &g->obj_list[i]);
@@ -114,7 +114,7 @@ void* avs3gop_lib_create(cfg_param_t *input, strm_out_t strm_callbak, rec_out_t 
         e->strm_buf = com_malloc(GOP_STRM_BUF, 0);
         e->top = g;
     }
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__APPLE__)
     pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &mask_bak);
 #endif
     return g;
