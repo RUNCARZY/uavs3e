@@ -58,6 +58,7 @@
 
 #ifndef _WIN32
 #if defined(__APPLE__)
+#include <unistd.h>
 #define _lseeki64 lseek
 #else
 #define _lseeki64 lseek64
