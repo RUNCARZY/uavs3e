@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define COMPILE_10BIT 1
+#define COMPILE_10BIT 0
 
 #if COMPILE_10BIT
 typedef unsigned short pel_t;

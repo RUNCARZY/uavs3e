@@ -19,4 +19,4 @@
 .endm
 #endif
 
-#define COMPILE_10BIT 1
+#define COMPILE_10BIT 0
