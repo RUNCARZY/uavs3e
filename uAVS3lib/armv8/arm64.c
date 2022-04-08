@@ -71,7 +71,7 @@ void com_funs_init_arm64()
     g_funs_handle.intra_pred_dc    = xPredIntraDCAdi_arm64;
     g_funs_handle.intra_pred_bi    = xPredIntraBiAdi_arm64;
     
-    g_funs_handle.sao_flt[0] = sao_getStatblk_arm64;
+    //g_funs_handle.sao_flt[0] = sao_getStatblk_arm64;
     g_funs_handle.sao_flt[1] = sao_on_lcu_arm64;
     
     g_funs_handle.deblk_luma[0] = deblock_ver_luma_arm64;
