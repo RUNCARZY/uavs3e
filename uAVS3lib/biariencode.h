@@ -23,7 +23,7 @@ static int uavs3e_get_log2(int v)
     _BitScanReverse(&index, v);
     return index;
 #else
-    return 31 - __builtin_clz(v);
+    return 31 - __builtin_clz(v|1);
 #endif
 }
 

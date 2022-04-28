@@ -464,7 +464,7 @@ void com_funs_init_intrinsic_functions_10bit()
     g_funs_handle.intra_pred_ang_y[31 - ANG_Y_OFFSET] = xPredIntraAngAdi_Y_31_sse128_10bit;
     g_funs_handle.intra_pred_ang_y[32 - ANG_Y_OFFSET] = xPredIntraAngAdi_Y_32_sse128_10bit;
 
-    g_funs_handle.intra_pred_plane = xPredIntraPlaneAdi_sse128_10bit;
+    //g_funs_handle.intra_pred_plane = xPredIntraPlaneAdi_sse128_10bit;
     g_funs_handle.intra_pred_hor   = xPredIntraHorAdi_sse128_10bit;
     g_funs_handle.intra_pred_ver   = xPredIntraVertAdi_sse128_10bit;
     g_funs_handle.intra_pred_dc    = xPredIntraDCAdi_sse128_10bit;
