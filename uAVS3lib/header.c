@@ -564,8 +564,8 @@ void write_pic_hdr_pb(avs3_enc_t *h)
     int bbv_delay, bbv_delay_extension;
     int picture_coding_type;
     int RPS_idx = (h->coi - 1) % input->gop_size;
-    int rpl_in_seqhdr_idx0 = 0;	//IsEqualRps(&h->curr_RPS.l0, input->seq_ref_cfg, 0);
-    int rpl_in_seqhdr_idx1 = 0;	//IsEqualRps(&h->curr_RPS.l1, input->seq_ref_cfg, 1);
+    int rpl_in_seqhdr_idx0 = -1;	//IsEqualRps(&h->curr_RPS.l0, input->seq_ref_cfg, 0);
+    int rpl_in_seqhdr_idx1 = -1;	//IsEqualRps(&h->curr_RPS.l1, input->seq_ref_cfg, 1);
 
     if (h->type & P_FRM) {
         picture_coding_type = 1;
