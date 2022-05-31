@@ -354,8 +354,13 @@ void refine_input(cfg_param_t *input)
     input->tools.use_deblk = 1;
     input->tools.use_sao  = 1;
     input->tools.use_secT = 1;
-
     input->speed_adj_rate = 1.0f;
+
+    if (SPEED_LEVEL(7, input->speed_level)) {
+        input->tools.use_deblk = 0;
+        input->tools.use_sao = 0;
+        input->tools.use_secT = 0;
+    }
 }
 
 void* encoding_thread(void *handle);

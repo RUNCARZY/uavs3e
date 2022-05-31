@@ -888,6 +888,9 @@ int motion_estimation(avs3_enc_t *h, me_info_t *me, int uiBitSize, int mode)
 
     h->analyzer.me_method = (uiBitSize == 3) ? IME_HEX : IME_TZ;
 
+    if (SPEED_LEVEL(7, h->input->speed_level)) {
+        h->analyzer.me_method = IME_HEX;
+    }
     if (SPEED_LEVEL(6, h->input->speed_level)) {
         me->b_fast_fme = 1;
     } else {
@@ -1209,13 +1212,16 @@ avs3_no_inline double analyze_one_cu_pb_frm(avs3_enc_t *h, cu_t *cu, best_mode_t
     double inter_satd;
     double skip_satd;
     int force_zero;
-
+    
     cu->mdirect_mode = 0;
     cu->ipred_mode_c = DC_PRED_C; 
 
     min_rdcost = analyze_cu_skip_mode(h, cu, bst, aec, uiBitSize, &skip_satd);
 
     if (SPEED_LEVEL(6, input->speed_level) && min_rdcost < a->cu_threshold * 0.7 && bst->bst_cu.cbp == 0) {
+        return min_rdcost;
+    }
+    if (SPEED_LEVEL(7, input->speed_level) && min_rdcost < a->cu_threshold) {
         return min_rdcost;
     }
 
@@ -1226,12 +1232,12 @@ avs3_no_inline double analyze_one_cu_pb_frm(avs3_enc_t *h, cu_t *cu, best_mode_t
         analyze_cu_inter_mode(h, cu, bst, aec, P2NX2N, &min_rdcost, uiBitSize, force_zero);
     }
 
-    if (h->curr_RPS.referd_by_others && bst->bst_cu.cbp) {
+    if (h->curr_RPS.referd_by_others && bst->bst_cu.cbp && !SPEED_LEVEL(7, input->speed_level)) {
         if (uiBitSize == 3 || !SPEED_LEVEL(6, input->speed_level)) {
             analyze_cu_intra_mode(h, cu, bst, aec, uiBitSize, a->lambda_mode, &min_rdcost);
         } else if (h->curr_RPS.layer < 2 || uiBitSize == 4) {
             double var_var_NxN = 0;
-            double threshold = (uiBitSize == 4 ? 41371 : 7900);
+            double threshold = (uiBitSize == 4 ? 41371 : 7900) ;
 
             statistic_cu_vertds(h, uiBitSize, 1, h->cu_pix_y, h->cu_pix_x, NULL, NULL, &var_var_NxN, 0x4);
 
@@ -1269,6 +1275,9 @@ double encode_one_cu(avs3_enc_t *h, best_mode_t *bst, aec_t *aec, int uiBitSize,
 
     h->analyzer.use_rdoq = 1; // RDOQ is enabled for encoding final parameters 
 
+    if (SPEED_LEVEL(7, h->input->speed_level)) {
+        h->analyzer.use_rdoq = 0;
+    }
     cu->cbp = 0;
 
     if (B_INTRA(mode)) {
@@ -1426,7 +1435,6 @@ double cdd_get_threshold(avs3_enc_t *h, int uiBitSize, double lambda)
             break;
         }
     }
-
     return threshold;
 }
 
@@ -1535,13 +1543,7 @@ double analyze_cu_tree(avs3_enc_t *h, aec_t *aec, int uiBitSize, int uiMaxBitSiz
             double threshold = a->cu_threshold * input->speed_adj_rate;
 
             early_terminate |= !(h->type & I_FRM) && large_cu_cost > a->cu_threshold * 12; // Skip Noisy Blocks
-
-            if (SPEED_LEVEL(7, input->speed_level) && uiBitSize == 4) {
-                threshold *= 2;
-            }
-
             early_terminate |= large_cu_cost < threshold;
-            
             early_terminate |= b_skip && large_cu_cost < threshold * 1.5;
  
             if (h->type == B_FRM && uiBitSize == 4) {
@@ -1551,6 +1553,9 @@ double analyze_cu_tree(avs3_enc_t *h, aec_t *aec, int uiBitSize, int uiMaxBitSiz
                 if (h->curr_RPS.layer == 3) {
                     early_terminate |= large_cu_cost < threshold * 2.0;
                 }
+            }
+            if (SPEED_LEVEL(7, input->speed_level)) {
+                early_terminate = 1;
             }
         }
     }
