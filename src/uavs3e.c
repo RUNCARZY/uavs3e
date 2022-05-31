@@ -218,7 +218,7 @@ static int refine_input_cfg(enc_cfg_t *param, enc_cfg_t *cfg_org)
         cfg_org->max_dt_size = 16;
     }
     /***************************************************************************/
-
+	cfg_org->ipf_flag = 0;
     com_mcpy(param, cfg_org, sizeof(enc_cfg_t));
 
     if (param->bit_depth_internal == 0) {
@@ -1325,8 +1325,6 @@ void *uavs3e_create(enc_cfg_t *cfg, int *err)
     h->info.tab_mvbits = h->tab_mvbits;
     inter_search_init(&h->pinter, info, 0);
 
-    uavs3e_threadpool_init(&h->frm_threads_pool, h->cfg.frm_threads, h->cfg.frm_threads, (void * (*)(void *))pic_enc_alloc, &h->info, (void(*)(void *))pic_enc_free);
-
     rc_init(&h->rc, &h->cfg);
 
 #if defined(ENABLE_FUNCTION_C)
@@ -1380,6 +1378,8 @@ void *uavs3e_create(enc_cfg_t *cfg, int *err)
     info->bind_emvr_to_amvr_P2       = SPEED_LEVEL(3, h->cfg.speed_level);
 
     info->depth_limit_part_ratio     = SPEED_LEVEL(4, h->cfg.speed_level);
+
+	uavs3e_threadpool_init(&h->frm_threads_pool, h->cfg.frm_threads, h->cfg.frm_threads, (void * (*)(void *))pic_enc_alloc, &h->info, (void(*)(void *))pic_enc_free);
 
     return h;
 }
@@ -1626,7 +1626,7 @@ void uavs3e_load_default_cfg(enc_cfg_t *cfg)
     cfg->affine_enable       =   1;
     cfg->smvd_enable         =   1;
     cfg->num_of_hmvp         =   8;
-    cfg->ipf_flag            =   1;
+    cfg->ipf_flag            =   0;
     cfg->tscpm_enable        =   1;
     cfg->umve_enable         =   1;
     cfg->emvr_enable         =   1;
