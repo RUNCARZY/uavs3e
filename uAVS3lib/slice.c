@@ -408,9 +408,8 @@ void* picture_data(void *param)
         WriteSequenceHeader(&pic->hdr_stream, (cfg_param_t *)input);
         //WriteSequenceUserData(&pic->hdr_stream);
 
-        if (input->ColourPrimary) {
-            WriteSequenceDisplayExtension(&pic->hdr_stream, input);
-        }
+        WriteSequenceDisplayExtension(&pic->hdr_stream, input, input->ColourPrimary ? 1 : 0);
+
         if (input->hdr_ext.enable) {
             WriteHdrExtension(&pic->hdr_stream, &input->hdr_ext);
         }

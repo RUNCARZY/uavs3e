@@ -4,7 +4,7 @@
 #include "commonVariables.h"
 
 int WriteSequenceHeader(bit_stream_t *strm, cfg_param_t *input);
-int WriteSequenceDisplayExtension(bit_stream_t *strm, const cfg_param_t *input);
+int WriteSequenceDisplayExtension(bit_stream_t *strm, const cfg_param_t *input, int color_description);
 int WriteHdrExtension(bit_stream_t *strm, const hdr_ext_data_t *hdr);
 int WriteSequenceUserData(bit_stream_t *strm);
 void write_slice_header(avs3_enc_t *h, bit_stream_t *strm, int patch_idx, int slice_qp);

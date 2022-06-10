@@ -387,10 +387,8 @@ int WriteSequenceHeader(bit_stream_t *strm, cfg_param_t *input)
     return strm->byte_pos * 8;
 }
 
-int WriteSequenceDisplayExtension(bit_stream_t *strm, const cfg_param_t *input)
+int WriteSequenceDisplayExtension(bit_stream_t *strm, const cfg_param_t *input, int color_description)
 {
-    int color_description = 1;
-
     U_V(32, "sequence display extension start code", 0x1b5, strm);
     U_V(4, "extension id", 2, strm);
     U_V(3, "video format", 0, strm);
@@ -403,9 +401,9 @@ int WriteSequenceDisplayExtension(bit_stream_t *strm, const cfg_param_t *input)
         U_V(8, "matrix coefficients", input->MatrixCoeff, strm);
     }
 
-    U_V(14, "display horizontal size", input->img_width, strm);
+    U_V(14, "display horizontal size", input->img_width - input->auto_crop_right, strm);
     U_V( 1, "marker bit", 1, strm);
-    U_V(14, "display vertical size", input->img_height, strm);
+    U_V(14, "display vertical size", input->img_height - input->auto_crop_bottom, strm);
     U_V( 1, "3D mode", 0, strm);
 
     strm->byte_buf <<= strm->bits_to_go;
