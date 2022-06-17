@@ -234,7 +234,7 @@ static app_cfg_t options[] = {
     {
         CFG_KEY_NULL,  "speed_level", CFG_TYPE_INTEGER,
         &cfg.speed_level,
-        "Level of coding speed"
+        "Level of coding speed, (default: 1; allowed values: 1, 2, 3, 4)"
         ,0 
     },
     {
@@ -837,7 +837,7 @@ static void print_config(void *h, enc_cfg_t param)
     printf("\tadaptive_gop             : %d\n", param.adaptive_gop);
 
     printf("\n< Parallel Info >\n");
-    printf("\tWPP threads              : %d\n", param.wpp_threads);
+    printf("\tWPP threads              : %d    (1-%d)\n", param.wpp_threads, (param.pic_height + param.ctu_size - 1) / param.ctu_size);
     printf("\tframe threads            : %d\n", param.frm_threads);
 
     printf("\n< RC Info >\n");
@@ -909,7 +909,7 @@ static void print_config(void *h, enc_cfg_t param)
     printf("\n");
 
     //speed-up tools
-    printf("\tSpeed_level: %d", param.speed_level);
+    printf("\tSpeed_level: %d   (allowed 1, 2, 3, 4)", param.speed_level);
 
     printf("\n");
 
