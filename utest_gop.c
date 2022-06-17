@@ -489,44 +489,33 @@ int ReadOneFrame_8bit(image_t *img, int fd, cfg_param_t *input, long long FrameN
     _lseeki64(fd, offset, SEEK_SET);
 
     buf = (unsigned char *)img->plane[0];
-    for (i = 0; i < height; i++) {
-        read_size += _read(fd, buf, width);
+	read_size += _read(fd, buf, width * height);
 
-        if (input->InterlaceCodingOption) {
-            _lseeki64(fd, width, SEEK_CUR);
-        }
-
-        buf += img->i_stride[0];
-    }
+   if (input->InterlaceCodingOption) {
+	   _lseeki64(fd, width, SEEK_CUR);
+   }
 
     if (input->InterlaceCodingOption && FrameNoInFile % 2) {
-        _lseeki64(fd, -width, SEEK_CUR);
+		_lseeki64(fd, -width, SEEK_CUR);
     }
 
     buf = (unsigned char *)img->plane[1];
-    for (i = 0; i < height / 2; i++) {
-        read_size += _read(fd, buf, width / 2);
+    read_size += _read(fd, buf, width * height / 4);
 
-        if (input->InterlaceCodingOption) {
-            _lseeki64(fd, width / 2, SEEK_CUR);
-        }
-
-        buf += img->i_stride[1];
+    if (input->InterlaceCodingOption) {
+		_lseeki64(fd, width / 2, SEEK_CUR);
     }
+
 
     if (input->InterlaceCodingOption && FrameNoInFile % 2) {
         _lseeki64(fd, -width / 2, SEEK_CUR);
     }
 
     buf = (unsigned char *)img->plane[2];
-    for (i = 0; i < height / 2; i++) {
-        read_size += _read(fd, buf, width / 2);
+    read_size += _read(fd, buf, width * height / 4);
 
-        if (input->InterlaceCodingOption) {
-            _lseeki64(fd, width / 2, SEEK_CUR);
-        }
-
-        buf += img->i_stride[2];
+    if (input->InterlaceCodingOption) {
+		_lseeki64(fd, width / 2, SEEK_CUR);
     }
 
     if (read_size != (size_t)(width * height * 3 / 2)) {
@@ -639,14 +628,10 @@ int ReadOneFrame_10bit(image_t *img, int fd, cfg_param_t *input, long long Frame
     _lseeki64(fd, offset * 2, SEEK_SET);
 
     buf = img->plane[0];
-    for (i = 0; i < height; i++) {
-        read_size += _read(fd, buf, width * 2);
+    read_size += _read(fd, buf, width * height * 2);
 
-        if (input->InterlaceCodingOption) {
-            _lseeki64(fd, width * 2, SEEK_CUR);
-        }
-
-        buf += img->i_stride[0];
+    if (input->InterlaceCodingOption) {
+        _lseeki64(fd, width * 2, SEEK_CUR);
     }
 
     if (input->InterlaceCodingOption && FrameNoInFile % 2) {
@@ -654,30 +639,23 @@ int ReadOneFrame_10bit(image_t *img, int fd, cfg_param_t *input, long long Frame
     }
 
     buf = img->plane[1];
-    for (i = 0; i < height / 2; i++) {
-        read_size += _read(fd, buf, width / 2 * 2);
+    read_size += _read(fd, buf, width * height / 2);
 
         if (input->InterlaceCodingOption) {
             _lseeki64(fd, width / 2 * 2, SEEK_CUR);
         }
-
-        buf += img->i_stride[1];
-    }
 
     if (input->InterlaceCodingOption && FrameNoInFile % 2) {
         _lseeki64(fd, -width / 2 * 2, SEEK_CUR);
     }
 
     buf = img->plane[2];
-    for (i = 0; i < height / 2; i++) {
-        read_size += _read(fd, buf, width / 2 * 2);
+    read_size += _read(fd, buf, width * height / 2);
 
         if (input->InterlaceCodingOption) {
             _lseeki64(fd, width / 2 * 2, SEEK_CUR);
         }
 
-        buf += img->i_stride[2];
-    }
 
     if (read_size != (size_t)(width * height * 3 / 2 * 2)) {
         return 0;
@@ -847,21 +825,30 @@ int main(int argc, char **argv)
 #endif
 
 #if defined(__GNUC__)
-    cpu_set_t mask1, mask2, mask3, mask4;
-    void *mask_list[4] = { &mask1, &mask2, &mask3, &mask4 };
+    cpu_set_t mask1, mask2, mask3, mask4, mask5, mask6, mask7, mask8;
+    void *mask_list[4] = { &mask1, &mask2, &mask3, &mask4, &mask5, &mask6, &mask7, &mask8 };
 
     CPU_ZERO(&mask1);
     CPU_ZERO(&mask2);
     CPU_ZERO(&mask3);
     CPU_ZERO(&mask4);
+	CPU_ZERO(&mask5);
+	CPU_ZERO(&mask6);
+	CPU_ZERO(&mask7);
+	CPU_ZERO(&mask8);
 
-    for (i = 0; i < 36; i++) {
-        CPU_SET(i * 4,     &mask1);
-        CPU_SET(i * 4 + 1, &mask2);
-        CPU_SET(i * 4 + 2, &mask3);
-        CPU_SET(i * 4 + 3, &mask4);
+    for (i = 0; i < 32; i++) {
+        CPU_SET(i,     &mask1);
+        CPU_SET(i + 32, &mask3);
+        CPU_SET(i + 32 * 2, &mask5);
+        CPU_SET(i + 32 * 3, &mask7);
     }
-    handle = avs3gop_lib_create(&input, callback_output_bitstream, callback_output_rec, NULL, 4, mask_list);
+	mask2 = mask1;
+	mask4 = mask3;
+	mask6 = mask5;
+	mask8 = mask7;
+
+    handle = avs3gop_lib_create(&input, callback_output_bitstream, callback_output_rec, NULL, 8, mask_list);
 #else
     handle = avs3gop_lib_create(&input, callback_output_bitstream, callback_output_rec, NULL, 2, NULL);
 #endif
