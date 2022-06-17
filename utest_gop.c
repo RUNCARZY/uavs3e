@@ -826,7 +826,7 @@ int main(int argc, char **argv)
 
 #if defined(__GNUC__)
     cpu_set_t mask1, mask2, mask3, mask4, mask5, mask6, mask7, mask8;
-    void *mask_list[4] = { &mask1, &mask2, &mask3, &mask4, &mask5, &mask6, &mask7, &mask8 };
+    void *mask_list[8] = { &mask1, &mask2, &mask3, &mask4, &mask5, &mask6, &mask7, &mask8 };
 
     CPU_ZERO(&mask1);
     CPU_ZERO(&mask2);

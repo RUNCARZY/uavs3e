@@ -9,6 +9,7 @@ extern "C" {
 #if defined(__GNUC__)
 #define __USE_GNU
 #include <sched.h>
+#define __USE_XOPEN2K8
 #endif
 
 #include "uAVS3lib.h"
