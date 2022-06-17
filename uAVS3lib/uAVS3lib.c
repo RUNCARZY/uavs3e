@@ -320,8 +320,8 @@ void refine_input(cfg_param_t *input)
 
     input->intra_period = max(2, input->intra_period);
 
-    printf("WPP threads of one frame: %d\n", input->threads_wpp);
-    printf("FRM threads of one frame: %d\n\n", input->threads_frm);
+    printf("WPP threads of one frame: %d     (allowed 1-%d)\n", input->threads_wpp, input->pic_height_in_lcu);
+    printf("FRM threads of one frame: %d     (allowed 1-33)\n\n", input->threads_frm);
 
     if (input->lcu_rows_in_slice <= 0) {
         input->lcu_rows_in_slice = input->pic_height_in_lcu;
