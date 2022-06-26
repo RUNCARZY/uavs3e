@@ -348,8 +348,14 @@ void refine_input(cfg_param_t *input)
     input->Min_H_MV = -8192;
     input->Max_H_MV =  8191;
 
-    refman->num_of_ref = min(refman->num_of_ref, 2);
-   
+    if (SPEED_LEVEL(7, input->speed_level))
+    {
+        refman->num_of_ref = min(refman->num_of_ref, 1);
+    }
+    else
+    {
+        refman->num_of_ref = min(refman->num_of_ref, 2);
+    }
     /* decision basic tools */
     input->tools.use_deblk = 1;
     input->tools.use_sao  = 1;

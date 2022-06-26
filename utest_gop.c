@@ -840,8 +840,8 @@ static void uavs3e_set_default_param(cfg_param_t *cfg)
 int main(int argc, char **argv)
 {
     int fd_in = 0;
-    long long check_time;
-    int i, j, k;
+    long long check_time=0, check_time1=0, check_time2=0;
+    int i;
     void *handle;
     
     srand((int)time(0));
@@ -855,6 +855,7 @@ int main(int argc, char **argv)
 #endif
 
 #if defined(__GNUC__)
+    int j, k;
     cpu_set_t mask1, mask2, mask3, mask4, mask5, mask6, mask7, mask8, mask9, mask10, mask11, mask12, mask13, mask14, mask15, mask16;
     void *mask_list[16] = { &mask1, &mask2, &mask3, &mask4, &mask5, &mask6, &mask7, &mask8, &mask9, &mask10, &mask11, &mask12, &mask13, &mask14, &mask15, &mask16 };
 
@@ -875,7 +876,7 @@ int main(int argc, char **argv)
     CPU_ZERO(&mask15);
     CPU_ZERO(&mask16);
 
-    for (i = 0; i < (input.threads_gop / input.node_num) + 1; i++)
+    for (i = 0; i < ((input.threads_gop - 1) / input.node_num) + 1; i++)
     {
         for (j = 0; j < input.node_num; j++)
         {
@@ -913,8 +914,10 @@ int main(int argc, char **argv)
     avs3gop_lib_speed_adjust(handle, 1);
 
     int repeat = 0;
+    int realtime_frame = input.intra_period * 10 * 8;
 
     for (i = 0; i < input.no_frames; i++) {
+        check_time1 = get_mdate();
         if (!ReadOneFrame(avs3gop_lib_imgbuf(handle), fd_in, &input, i)) {
             if (repeat--) {
                 i= 0;
@@ -923,9 +926,15 @@ int main(int argc, char **argv)
                 break;
             }
         }
-
+        
         avs3gop_lib_encode(handle, 0, 0);
         total_frms++;
+        check_time2 += (get_mdate() - check_time1) / 1000;
+        if ((total_frms + 1) % realtime_frame == 0)
+        {
+            printf("real time frame rate: %.2fps", realtime_frame * 1000.0 / check_time2);
+            check_time2 = 0;
+        }
     }
 
     /* flush left frames */
