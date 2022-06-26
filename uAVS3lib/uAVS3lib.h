@@ -5,10 +5,9 @@
 extern "C" {
 #endif
 
-#define COMPILE_10BIT 0
-
 #if COMPILE_10BIT
 typedef unsigned short pel_t;
+#pragma message("10bit")
 #else
 typedef unsigned char pel_t;
 #endif

@@ -418,19 +418,20 @@ void Configure(cfg_param_t *input, int ac, signed char *av[])
                 printf("\n");
             }
             else {
-				printf("\nError in command line, command %d, command string '%s'\n", CLcount, av[CLcount]);
-				printf("input[-f] is mandatory! \n");
-				printf("Configuration error\n");
-				printf("<Optional parameter > \n");
-				printf("   -f */bin/encoder_ra.cfg\n     : mandatory, including default parameter configuration\n");
-				for (int i = 0; i < 36; i++)
-				{
-					printf("   -p %s = \n     : %s \n", tab_cfg_map[i].TokenName, tab_cfg_map[i].ToKenLog);
-				}
-				printf("\n");
+                int i;
+                printf("\nError in command line, command %d, command string '%s'\n", CLcount, av[CLcount]);
+                printf("input[-f] is mandatory! \n");
+                printf("Configuration error\n");
+                printf("<Optional parameter > \n");
+                printf("   -f */bin/encoder_ra.cfg\n     : mandatory, including default parameter configuration\n");
+                for (i = 0; i < 36; i++)
+                {
+                    printf("   -p %s = \n     : %s \n", tab_cfg_map[i].TokenName, tab_cfg_map[i].ToKenLog);
+                }
+                printf("\n");
 
-				return -1;
-			}
+                return -1;
+            }
         }
     }
 

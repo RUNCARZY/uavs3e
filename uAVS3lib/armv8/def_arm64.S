@@ -18,5 +18,3 @@
     \name:
 .endm
 #endif
-
-#define COMPILE_10BIT 0
