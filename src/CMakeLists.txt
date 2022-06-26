@@ -4,7 +4,7 @@ set(LIBNAME uavs3e)
 # add source
 aux_source_directory(. DIR_UAVS3E_SRC)
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64" OR "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm64")
-  message("enable_armv8")
+  message("-- enable_armv8")
   aux_source_directory(./armv8 DIR_ARM64_SRC)
   list(APPEND DIR_ARM64_SRC "./armv8/arm64.c")
   list(APPEND DIR_ARM64_SRC "./armv8/alf_arm64.S")
@@ -29,6 +29,14 @@ else()
 endif()
 
 include_directories("../inc")
+
+if(${COMPILE_10BIT})
+    add_definitions(-DCOMPILE_10BIT=1)
+    message("-- compile 10bit")
+else()
+    add_definitions(-DCOMPILE_10BIT=0)
+    message("-- compile 8bit")
+endif()
 
 set_source_files_properties(${DIR_UAVS3E_SRC} PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=c99 -O3")
 set_source_files_properties(${DIR_X86_SRC} PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=c99 -O3 -msse4.2")

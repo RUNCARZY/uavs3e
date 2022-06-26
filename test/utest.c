@@ -234,7 +234,7 @@ static app_cfg_t options[] = {
     {
         CFG_KEY_NULL,  "speed_level", CFG_TYPE_INTEGER,
         &cfg.speed_level,
-        "Level of coding speed, (default: 1; allowed values: 1, 2, 3, 4)"
+        "Level of coding speed, (default: 0; allowed values: 0, 1, 2, 3, 4)"
         ,0 
     },
     {
