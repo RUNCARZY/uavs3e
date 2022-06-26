@@ -56,10 +56,10 @@ endif()
 
 if(${COMPILE_10BIT})
     add_definitions(-DCOMPILE_10BIT=1)
-    message("compile 10bit")
+    message("--compile 10bit")
 else()
     add_definitions(-DCOMPILE_10BIT=0)
-    message("compile 8bit")
+    message("--compile 8bit")
 endif()
    
 list(APPEND DIR_UAVS3LIB_SRC ${DIR_TOOL_SRC})
