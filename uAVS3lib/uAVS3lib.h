@@ -171,6 +171,7 @@ typedef struct cfg_param_t {
 
     int threads_wpp;
     int threads_frm;  // no use, only for RT
+    int threads_gop;
     int lcu_rows_in_slice;
     int no_frames;                //!< number of frames to be encoded
     int baseQP;                      //!< QP of first frame
@@ -252,6 +253,10 @@ typedef struct cfg_param_t {
     double frame_rate;
 
     double speed_adj_rate;
+
+    unsigned int node[16][256];
+    unsigned char node_num;
+    unsigned char core_in_node[16];
 } cfg_param_t;
 
 /* ---------------------------------------------------------------------------
@@ -403,6 +408,7 @@ typedef struct {
 
 static const char refheadstr[] = "Frame1:";
 static const char hdrheadstr[] = "HDRExt:";
+static const char nodelist[] = "NodeList:";
 
 static const ref_man RA_RPS[8] = {
     { 0, 8, 1, 2, 1,{ 8,  7, 0,  0 }, 0,{ 0,  0, 0, 0 }, { 4, 2, {  8,   7,  16,  3,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 } },{ 0, 0, { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0} }, },
@@ -420,7 +426,8 @@ static const ref_man RA_RPS[8] = {
 static const Mapping tab_cfg_map[] = {
 	{ "threads-wpp",            PARAM_OFFSET(threads_wpp),                  0,     1, "Number of threads for WPP" },
 	{ "threads-frm",            PARAM_OFFSET(threads_frm),                  0,     1, "Number of threads for Frame" },
-	{ "LcuRowInSlice",          PARAM_OFFSET(lcu_rows_in_slice),            0,     0, "default (0: one slice)" },
+    { "threads-gop",            PARAM_OFFSET(threads_gop),                  0,     8, "Number of threads for GOP, default(8)" },
+    { "LcuRowInSlice",          PARAM_OFFSET(lcu_rows_in_slice),            0,     0, "default (0: one slice)" },
 	{ "IntraPeriod",            PARAM_OFFSET(intra_period),                 0,     6, "Period of I-Frames (0=only first)" },
 	{ "FramesToBeEncoded",      PARAM_OFFSET(no_frames),                    0,     0, "maximum number of frames to be encoded"},
 	{ "QP",                     PARAM_OFFSET(baseQP),                       0,    32, "Quant. param for first frame (intra) (0-63) " },

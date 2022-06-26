@@ -170,6 +170,15 @@ int ParseHdrContent(cfg_param_t *input, signed char **buf)
     return (int)(p - buf);
 }
 
+int ParseNodeContent(cfg_param_t* input, signed char** buf, int j, int k)
+{
+    signed char** p = buf + 1;
+
+    input->node[j][k]= atoi(*p++);
+
+    return (int)(p - buf - 1);
+}
+
 static int ParameterNameToMapIndex(const Mapping *map_tab, signed char *s)
 {
     int i = 0;
@@ -270,6 +279,26 @@ void ParseContent(cfg_param_t *input, signed char *buf, int bufsize)
             i += ParseHdrContent(input, &items[i]);
         }
 
+        int j = 0, k = 0;
+        if(0 == strcmp(items[i], nodelist)) {
+            while (!(0 == strcmp(items[i], ";")))
+            {
+                i += ParseNodeContent(input, &items[i], j, k);
+                k++;
+                if (0 == strcmp(items[i], ","))
+                {
+                    input->core_in_node[j] = k - 1;
+                    j++;
+                    input->node_num = j;
+                    k = 0;
+                }
+            }
+            input->core_in_node[j] = k - 1;
+            j++;
+            input->node_num = j;
+            i++;
+        }
+        
         if (0 >(MapIdx = ParameterNameToMapIndex(tab_cfg_map, items[i]))) {
             printf(" Parsing error in config file: Parameter Name '%s' not recognized.", items[i]);
         }
@@ -812,7 +841,7 @@ int main(int argc, char **argv)
 {
     int fd_in = 0;
     long long check_time;
-    int i;
+    int i, j, k;
     void *handle;
     
     srand((int)time(0));
@@ -826,30 +855,38 @@ int main(int argc, char **argv)
 #endif
 
 #if defined(__GNUC__)
-    cpu_set_t mask1, mask2, mask3, mask4, mask5, mask6, mask7, mask8;
-    void *mask_list[8] = { &mask1, &mask2, &mask3, &mask4, &mask5, &mask6, &mask7, &mask8 };
+    cpu_set_t mask1, mask2, mask3, mask4, mask5, mask6, mask7, mask8, mask9, mask10, mask11, mask12, mask13, mask14, mask15, mask16;
+    void *mask_list[16] = { &mask1, &mask2, &mask3, &mask4, &mask5, &mask6, &mask7, &mask8, &mask9, &mask10, &mask11, &mask12, &mask13, &mask14, &mask15, &mask16 };
 
     CPU_ZERO(&mask1);
     CPU_ZERO(&mask2);
     CPU_ZERO(&mask3);
     CPU_ZERO(&mask4);
-	CPU_ZERO(&mask5);
-	CPU_ZERO(&mask6);
-	CPU_ZERO(&mask7);
-	CPU_ZERO(&mask8);
+    CPU_ZERO(&mask5);
+    CPU_ZERO(&mask6);
+    CPU_ZERO(&mask7);
+    CPU_ZERO(&mask8);
+    CPU_ZERO(&mask9);
+    CPU_ZERO(&mask10);
+    CPU_ZERO(&mask11);
+    CPU_ZERO(&mask12);
+    CPU_ZERO(&mask13);
+    CPU_ZERO(&mask14);
+    CPU_ZERO(&mask15);
+    CPU_ZERO(&mask16);
 
-    for (i = 0; i < 32; i++) {
-        CPU_SET(i,     &mask1);
-        CPU_SET(i + 32, &mask3);
-        CPU_SET(i + 32 * 2, &mask5);
-        CPU_SET(i + 32 * 3, &mask7);
+    for (i = 0; i < (input.threads_gop / input.node_num) + 1; i++)
+    {
+        for (j = 0; j < input.node_num; j++)
+        {
+            for (k = 0; k < input.core_in_node[j]; k++)
+            {
+                CPU_SET(input.node[j][k], (cpu_set_t*)mask_list[j + (i * input.node_num)]);
+            }
+        }
     }
-	mask2 = mask1;
-	mask4 = mask3;
-	mask6 = mask5;
-	mask8 = mask7;
 
-    handle = avs3gop_lib_create(&input, callback_output_bitstream, callback_output_rec, NULL, 8, mask_list);
+    handle = avs3gop_lib_create(&input, callback_output_bitstream, callback_output_rec, NULL, input.threads_gop, mask_list);
 #else
     handle = avs3gop_lib_create(&input, callback_output_bitstream, callback_output_rec, NULL, 2, NULL);
 #endif
