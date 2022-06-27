@@ -5,8 +5,9 @@
  2) supports to compile for Windows/Linux systems.
  3) optimized for SSE4/AVX2/ARMV8 NEON chips.
  4) 10bit encoding on all supported platforms (without SIMD).
- 5) 本编解码器已支持x86和arm平台，并在鲲鹏处理器上进行测试验证，最高可支持8K 60fps实时编解码（RealTime branch）。ARM平台推荐首选鲲鹏处理器。
-
+ 5) The uavs3 codec has supported x86 and arm platforms, and has been tested and verified on the Kunpeng processor. 
+ 6) The ARM platform recommends the Kunpeng processor.
+ 
 # license
   Copyright reserved by “Peking University Shenzhen Graduate School”, “Peng Cheng Laboratory”, and “Guangdong Bohua UHD Innovation Corporation” <br><br>
   This program is a free software. You can redistribute it and/or modify it under the terms of the BSD 4-clause license. <br>
@@ -39,14 +40,13 @@ Build:
 # Run tests
 ## window/linux
 
-  uavs3e [--config file] [-paramShort ParameterValue] [--paramLong ParameterValue]
+  uavs3e [-f file] [-p param=ParameterValue]
 
-     --config file    
-             All Parameters are initially taken from the 'file', typically: "encode_RA.cfg".
+     --f file    
+             All Parameters are initially taken from the 'file', typically: "bin/encode_ra.cfg".
 
-     -paramShort ParameterValue
-     --paramLong ParameterValue
-             If -paramShort or --paramLong parameters are present, then the ParameterValue will override the default settings in the configuration file.
+     -p param = ParameterValue
+             If parameters are present, then the ParameterValue will override the default settings in the configuration file.
 
 
 # Contributors

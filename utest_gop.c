@@ -932,7 +932,7 @@ int main(int argc, char **argv)
         check_time2 += (get_mdate() - check_time1) / 1000;
         if ((total_frms + 1) % realtime_frame == 0)
         {
-            printf("real time frame rate: %.2fps", realtime_frame * 1000.0 / check_time2);
+            printf("!real time frame rate: %.2fps\n", realtime_frame * 1000.0 / check_time2);
             check_time2 = 0;
         }
     }

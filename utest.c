@@ -281,6 +281,14 @@ void ParseContent(cfg_param_t *input, signed char *buf, int bufsize)
             i += ParseHdrContent(input, &items[i]);
         }
 
+        if (0 == strcmp(items[i], nodelist)) {
+            while (!((0 == strcmp(items[i], ";")) || (0 == strcmp(items[i], ";\r"))))
+            {
+                i++;
+            }
+            i++;
+        }
+
         if (0 >(MapIdx = ParameterNameToMapIndex(tab_cfg_map, items[i]))) {
             printf(" Parsing error in config file: Parameter Name '%s' not recognized.", items[i]);
         }
