@@ -281,11 +281,11 @@ void ParseContent(cfg_param_t *input, signed char *buf, int bufsize)
 
         int j = 0, k = 0;
         if(0 == strcmp(items[i], nodelist)) {
-            while (!(0 == strcmp(items[i], ";")))
+            while (!((0 == strcmp(items[i], ";")) || (0 == strcmp(items[i], ";\r"))))
             {
                 i += ParseNodeContent(input, &items[i], j, k);
                 k++;
-                if (0 == strcmp(items[i], ","))
+                if ((0 == strcmp(items[i], ",")) || (0 == strcmp(items[i], ",\r")))
                 {
                     input->core_in_node[j] = k - 1;
                     j++;
