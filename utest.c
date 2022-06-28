@@ -438,7 +438,7 @@ void Configure(cfg_param_t *input, int ac, signed char *av[])
                 }
                 printf("\n");
 
-                return -1;
+                return;
             }
         }
     }

@@ -447,7 +447,7 @@ void Configure(cfg_param_t *input, int ac, signed char *av[])
                     printf("   -p %s = \n     : %s \n", tab_cfg_map[i].TokenName, tab_cfg_map[i].ToKenLog);
                 }
                 printf("\n");
-
+                return;
             }
         }
     }

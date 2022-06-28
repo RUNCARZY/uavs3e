@@ -23,7 +23,9 @@ Prerequisites:
 
 build:
   1. ./version.bat (to generate version.h)
-  2. solution file: build/x86_windows/uavs3e.sln 
+  2. solution file: uAVS3.sln 
+  
+  To support 10bit streams decoding, edit uAVS3lib/uAVS3lib.h : #define COMPILE_10BIT 1
 
 ## linux
 Prerequisites:
@@ -31,11 +33,12 @@ Prerequisites:
   2. CMake (https://cmake.org) version 2.8 or higher
   
 Build:
-  1. mkdir build/linux
-  2. cd build/linux && cmake ../..
+  1. mkdir build
+  2. cd build && cmake ..
   3. make && make install
 
   to build shared library, set BUILD_SHARED_LIBS=1 please.
+  To support 10bit streams decoding: CMAKE -DCOMPILE_10BIT=1 ..
 
 # Run tests
 ## window/linux
