@@ -394,6 +394,41 @@ frame_t* prepare_RefInfo(avs3_ctrl_t *ctrl, ref_man* curr_RPS, int type, i64s_t 
         }
     }
 
+    int tmp = 0 , x, y;
+    if ((l0->num - l0->active) > 1)
+    {
+        int dis = l0->num - l0->active;
+        for (x = 0; x < (dis - 1); x++)
+        {
+            for (y = 0; y < (dis - 1 - x); y++)
+            {
+                if (l0->delta_doi[y + l0->active] > l0->delta_doi[y + l0->active + 1])
+                {
+                    tmp = l0->delta_doi[y + l0->active];
+                    l0->delta_doi[y + l0->active] = l0->delta_doi[y + l0->active + 1];
+                    l0->delta_doi[y + l0->active + 1] = tmp;
+                }
+            }
+        }
+    }
+
+    if ((l1->num - l1->active) > 1)
+    {
+        int dis = l1->num - l1->active;
+        for (x = 0; x < (dis - 1); x++)
+        {
+            for (y = 0; y < (dis - 1 - x); y++)
+            {
+                if (l1->delta_doi[y + l1->active] > l1->delta_doi[y + l1->active + 1])
+                {
+                    tmp = l1->delta_doi[y + l1->active];
+                    l1->delta_doi[y + l1->active] = l1->delta_doi[y + l1->active + 1];
+                    l1->delta_doi[y + l1->active + 1] = tmp;
+                }
+            }
+        }
+    }
+
     p_cur_frm->ref_cnt++;
 
     if (curr_RPS->referd_by_others) {

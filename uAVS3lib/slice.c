@@ -166,6 +166,7 @@ void* encode_lcu_row(void* param)
             } else {
                 reset_coding_state(&h->wpp_aec[lcu_y - 1]);
             }
+            rdoq_init_cu_est_bits(h, &h->aec);
         }
         set_aec_functions(&h->aec, 2);
         store_coding_state_hdr(&cs_bak);
