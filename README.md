@@ -5,6 +5,8 @@
  2) supports to compile for Windows/Linux systems.
  3) optimized for SSE4/AVX2 chips.
  4) 10bit encoding on all supported platforms (without SIMD).
+ 5) The uavs3 codec has supported x86 and arm platforms, and has been tested and verified on the Kunpeng processor. 
+ 6) The ARM platform recommends the Kunpeng processor.
 
 # license
   Copyright reserved by “Peking University Shenzhen Graduate School”, “Peng Cheng Laboratory”, and “Guangdong Bohua UHD Innovation Corporation” <br><br>
@@ -13,7 +15,7 @@
   
 # compile
   The default configuration only support 8bit decoding. <br>
-  To support 10bit streams decoding, edit inc/com_api.h : #define BIT_DEPTH 10
+  To support 10bit streams decoding:cmake -DCOMPILE_10BIT=1 
 
 ## windows
 Prerequisites:
@@ -22,6 +24,8 @@ Prerequisites:
 build:
   1. ./version.bat (to generate version.h)
   2. solution file: build/x86_windows/uavs3e.sln 
+  
+  To support 10bit streams decoding, edit inc/com_api.h : #define COMPILE_10BIT 1 
 
 ## linux
 Prerequisites:
@@ -30,9 +34,10 @@ Prerequisites:
   
 Build:
   1. mkdir build/linux
-  2. cd build/linux && cmake ../..
+  2. cd build/linux && cmake -DCOMPILE_10BIT=0 ../..
   3. make && make install
-
+  
+  To support 10bit streams decoding:cmake -DCOMPILE_10BIT=1
   to build shared library, set BUILD_SHARED_LIBS=1 please.
 
 # Run tests
