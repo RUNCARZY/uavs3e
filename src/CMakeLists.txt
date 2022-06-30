@@ -32,10 +32,8 @@ include_directories("../inc")
 
 if(${COMPILE_10BIT})
     add_definitions(-DCOMPILE_10BIT=1)
-    message("-- compile 10bit")
 else()
     add_definitions(-DCOMPILE_10BIT=0)
-    message("-- compile 8bit")
 endif()
 
 set_source_files_properties(${DIR_UAVS3E_SRC} PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=c99 -O3")
