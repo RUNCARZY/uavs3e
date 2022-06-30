@@ -14,7 +14,29 @@
 
 #include "uAVS3lib/uAVS3lib_gop.h"
 
-#define TEST_SPEED 0
+#define SPEED_TEST 0
+
+#if SPEED_TEST
+
+typedef struct listt
+{
+    unsigned char* list[2];
+    int width;
+    int height;
+}listt;
+
+#ifdef _WIN32
+#include <IO.H>
+#include "./uAVS3lib/tools/win32thread.h"
+#include "./uAVS3lib/tools/win32thread.c"
+#include "./uAVS3lib/tools/threadpool.h"
+#include "./uAVS3lib/tools/threadpool.c"
+#else
+#include "./uAVS3lib/tools/threadpool.h"
+#include "./uAVS3lib/tools/threadpool.c"
+#endif
+#endif
+
 #define SKIP_FRAMES 0
 
 #define S_IREAD        0000400         /* read  permission, owner */
@@ -43,6 +65,10 @@ int skip_frame = 0;
 #endif
 
 int (*ReadOneFrame)(image_t *img, int fd, cfg_param_t *input, long long FrameNoInFile);
+
+#if SPEED_TEST
+int(*ReadOneth)(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg_param_t *input, long long FrameNoInFile);
+#endif
 
 cfg_param_t input;
 int fd_bitstream = 0;
@@ -745,6 +771,63 @@ int ReadOneFrame_10bit(image_t *img, int fd, cfg_param_t *input, long long Frame
     return 1;
 }
 
+#if SPEED_TEST
+void *mem_copy(void* list)
+{
+    listt *tt = (listt *)list;
+    memcpy(tt->list[1], tt->list[0], tt->height * tt->width / 2);
+    return NULL;
+}
+
+int ReadOneth_10bit(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg_param_t *input, int i)
+{
+    listt *listx[6];
+    int width = input->img_width - input->auto_crop_right;
+    int height = input->img_height - input->auto_crop_bottom;
+
+    if (i > 49)
+    {
+        return 0;
+    }
+
+    for (i = 0; i < 6; i++)
+    {
+        listx[i] = malloc(sizeof(listt));
+        listx[i]->list[0] = fd + width * height / 2 * i;
+        switch (i)
+        {
+        case 0:
+            listx[i]->list[1] = (unsigned char *)img->plane[0];
+            break;
+        case 1:
+            listx[i]->list[1] = (unsigned char *)img->plane[0] + width * height / 2;
+            break;
+        case 2:
+            listx[i]->list[1] = (unsigned char *)img->plane[0] + width * height;
+            break;
+        case 3:
+            listx[i]->list[1] = (unsigned char *)img->plane[0] + width * height * 3 / 2;
+            break;
+        case 4:
+            listx[i]->list[1] = (unsigned char *)img->plane[1];
+            break;
+        case 5:
+            listx[i]->list[1] = (unsigned char *)img->plane[2];
+            break;
+        }
+        listx[i]->width = width;
+        listx[i]->height = height;
+        avs3_threadpool_run(mem, mem_copy, listx[i], 1);
+    }
+    for (i = 0; i < 6; i++)
+    {
+        avs3_threadpool_wait(mem, listx[i]);
+    }
+
+    return 1;
+}
+#endif
+
 void information_init(cfg_param_t *input)
 {
     printf("-----------------------------------------------------------------------------\n");
@@ -904,24 +987,40 @@ int main(int argc, char **argv)
     information_init(&input);
 
     check_time = get_mdate();
-
+#if SPEED_TEST
+    ReadOneth = ReadOneth_10bit;
+#else
     if (input.sample_bit_depth == 8) {
         ReadOneFrame = ReadOneFrame_8bit;
     } else {
         ReadOneFrame = ReadOneFrame_10bit;
     }
+#endif
 
     avs3gop_lib_speed_adjust(handle, 1);
 
-    int repeat = 0;
+#if SPEED_TEST
+    avs3_threadpool_t *mem_threadpool;
+    mem_threadpool = avs3_threadpool_init(6, 6, NULL, NULL);
+
+    int repeat = 100;
+    long long read_size;
+
     int realtime_frame = input.intra_period * 10 * 8;
+    unsigned char* buffer[5];
+
+    for (i = 0; i < 5; i++)
+    {
+        buffer[i] = malloc(2 * input.img_width * input.img_height * 15);
+        read_size = _read(fd_in, buffer[i], 2 * input.img_width*input.img_height * 15);
+    }
 
     for (i = 0; i < input.no_frames; i++) {
         check_time1 = get_mdate();
-        if (!ReadOneFrame(avs3gop_lib_imgbuf(handle), fd_in, &input, i)) {
+        if (!ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i)) {
             if (repeat--) {
                 i= 0;
-                ReadOneFrame(avs3gop_lib_imgbuf(handle), fd_in, &input, i);
+                ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i);
             } else {
                 break;
             }
@@ -936,6 +1035,33 @@ int main(int argc, char **argv)
             check_time2 = 0;
         }
     }
+
+#else
+    int repeat = 0;
+    int realtime_frame = input.intra_period * 10 * 8;
+
+    for (i = 0; i < input.no_frames; i++) {
+        check_time1 = get_mdate();
+        if (!ReadOneFrame(avs3gop_lib_imgbuf(handle), fd_in, &input, i)) {
+            if (repeat--) {
+                i = 0;
+                ReadOneFrame(avs3gop_lib_imgbuf(handle), fd_in, &input, i);
+            }
+            else {
+                break;
+            }
+        }
+
+        avs3gop_lib_encode(handle, 0, 0);
+        total_frms++;
+        check_time2 += (get_mdate() - check_time1) / 1000;
+        if ((total_frms + 1) % realtime_frame == 0)
+        {
+            printf("!real time frame rate: %.2fps\n", realtime_frame * 1000.0 / check_time2);
+            check_time2 = 0;
+        }
+    }
+#endif
 
     /* flush left frames */
     avs3gop_lib_encode(handle, 1, 1);
