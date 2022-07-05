@@ -923,7 +923,7 @@ static void uavs3e_set_default_param(cfg_param_t *cfg)
 int main(int argc, char **argv)
 {
     int fd_in = 0;
-    long long check_time=0, check_time1=0, check_time2=0;
+    long long check_time=0;
     int i;
     void *handle;
     
@@ -1016,7 +1016,6 @@ int main(int argc, char **argv)
     }
 
     for (i = 0; i < input.no_frames; i++) {
-        check_time1 = get_mdate();
         if (!ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i)) {
             if (repeat--) {
                 i= 0;
@@ -1028,20 +1027,12 @@ int main(int argc, char **argv)
         
         avs3gop_lib_encode(handle, 0, 0);
         total_frms++;
-        check_time2 += (get_mdate() - check_time1) / 1000;
-        if ((total_frms + 1) % realtime_frame == 0)
-        {
-            printf("!real time frame rate: %.2fps\n", realtime_frame * 1000.0 / check_time2);
-            check_time2 = 0;
-        }
     }
 
 #else
     int repeat = 0;
-    int realtime_frame = input.intra_period * 10 * 8;
 
     for (i = 0; i < input.no_frames; i++) {
-        check_time1 = get_mdate();
         if (!ReadOneFrame(avs3gop_lib_imgbuf(handle), fd_in, &input, i)) {
             if (repeat--) {
                 i = 0;
@@ -1053,13 +1044,7 @@ int main(int argc, char **argv)
         }
 
         avs3gop_lib_encode(handle, 0, 0);
-        total_frms++;
-        check_time2 += (get_mdate() - check_time1) / 1000;
-        if ((total_frms + 1) % realtime_frame == 0)
-        {
-            printf("!real time frame rate: %.2fps\n", realtime_frame * 1000.0 / check_time2);
-            check_time2 = 0;
-        }
+        total_frms++;       
     }
 #endif
 

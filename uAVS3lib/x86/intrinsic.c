@@ -196,7 +196,7 @@ void com_funs_init_intrinsic_functions()
     g_funs_handle.cost_blk_satd[0] = xCalcHAD4x4_sse128;
     g_funs_handle.cost_blk_satd[1] = xCalcHAD8x8_sse128;
 
-    g_funs_handle.cost_satd_i = xCalcHADs8x8_I_sse128;
+    //g_funs_handle.cost_satd_i = xCalcHADs8x8_I_sse128;
 
     for (i = 0; i < 33; i++) {
         g_funs_handle.avg_pel[i] = avg_pel_0_sse128;
@@ -417,8 +417,8 @@ void com_funs_init_intrinsic_functions_10bit()
 	g_funs_handle.cost_avg_sad[ 8] = xGetAVGSAD32_sse128_10bit;
 	g_funs_handle.cost_avg_sad[16] = xGetAVGSAD64_sse128_10bit;
 
-	g_funs_handle.cost_blk_satd[0] = xCalcHAD4x4_sse128_10bit;
-	g_funs_handle.cost_blk_satd[1] = xCalcHAD8x8_sse128_10bit;
+	//g_funs_handle.cost_blk_satd[0] = xCalcHAD4x4_sse128_10bit;
+	//g_funs_handle.cost_blk_satd[1] = xCalcHAD8x8_sse128_10bit;
     
     g_funs_handle.cost_satd_i = xCalcHADs8x8_I_sse128_10bit;
 
