@@ -830,6 +830,20 @@ int ReadOneth_10bit(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg
 
 void information_init(cfg_param_t *input)
 {
+    if (input->img_width % 32 != 0) {
+        input->auto_crop_right = 32 - input->img_width % 32;
+    }
+    else {
+        input->auto_crop_right = 0;
+    }
+    if (input->img_height % 32 != 0) {
+        input->auto_crop_bottom = 32 - input->img_height % 32;
+    }
+    else {
+        input->auto_crop_bottom = 0;
+    }
+    input->img_width += input->auto_crop_right;
+    input->img_height += input->auto_crop_bottom;
     printf("-----------------------------------------------------------------------------\n");
     printf(" Input YUV file                    : %s \n", input->infile);
     printf(" Output AVS bitstream              : %s \n", input->outfile);
@@ -1006,7 +1020,6 @@ int main(int argc, char **argv)
     int repeat = 100;
     long long read_size;
 
-    int realtime_frame = input.intra_period * 10 * 8;
     unsigned char* buffer[5];
 
     for (i = 0; i < 5; i++)
