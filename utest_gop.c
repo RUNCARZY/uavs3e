@@ -67,7 +67,7 @@ int skip_frame = 0;
 int (*ReadOneFrame)(image_t *img, int fd, cfg_param_t *input, long long FrameNoInFile);
 
 #if SPEED_TEST
-int(*ReadOneth)(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg_param_t *input, long long FrameNoInFile);
+int(*ReadOneth)(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg_param_t *input, long long FrameNoInFile, int numframes);
 #endif
 
 cfg_param_t input;
@@ -779,13 +779,13 @@ void *mem_copy(void* list)
     return NULL;
 }
 
-int ReadOneth_10bit(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg_param_t *input, int i)
+int ReadOneth_10bit(avs3_threadpool_t *mem, image_t *img, unsigned char *fd, cfg_param_t *input, int i, int numframes )
 {
     listt *listx[6];
     int width = input->img_width - input->auto_crop_right;
     int height = input->img_height - input->auto_crop_bottom;
 
-    if (i > 49)
+    if (i > (numframes - 1))
     {
         return 0;
     }
@@ -1018,21 +1018,24 @@ int main(int argc, char **argv)
     mem_threadpool = avs3_threadpool_init(6, 6, NULL, NULL);
 
     int repeat = 100;
+    int numframes = 50;
     long long read_size;
 
-    unsigned char* buffer[5];
+    unsigned char* buffer[15];
 
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < 15; i++)
     {
         buffer[i] = malloc(2 * input.img_width * input.img_height * 15);
         read_size = _read(fd_in, buffer[i], 2 * input.img_width*input.img_height * 15);
+        if (read_size != 2 * input.img_width*input.img_height * 15)
+            break;
     }
 
     for (i = 0; i < input.no_frames; i++) {
-        if (!ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i)) {
+        if (!ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i, numframes)) {
             if (repeat--) {
                 i= 0;
-                ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i);
+                ReadOneth(mem_threadpool, avs3gop_lib_imgbuf(handle), buffer[i/10] + i%10 * 3 * input.img_width*input.img_height, &input, i, numframes);
             } else {
                 break;
             }
