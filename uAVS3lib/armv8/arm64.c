@@ -53,7 +53,7 @@ void com_funs_init_arm64()
     
     g_funs_handle.sub_trans[1] = sub_trans_4x4_arm64;
     g_funs_handle.sub_trans[2] = sub_trans_8x8_arm64_8bit;
-    g_funs_handle.sub_trans[3] = sub_trans_16x16_arm64;
+    //g_funs_handle.sub_trans[3] = sub_trans_16x16_arm64;
     g_funs_handle.sub_trans[4] = sub_trans_32x32_arm64;
     
     g_funs_handle.pix_sub[0] = pix_sub_4_arm64;
