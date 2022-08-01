@@ -12,9 +12,9 @@ int main(int argc, char * argv[]) {
     NSLog(@"path:   %@",NsDocuments);
     NSLog(@"paths:   %@",NSHomeDirectory());
 
-    char infile[128]="MarketPlace_1920x1080_60fps_10bit_420.yuv";
+    //char infile[128]="BasketballDrive_1920x1080_50.yuv";
     char outfile[128]="out.yuv";
-    //char infile[128]="Cactus_1920x1080_50.yuv";
+    char infile[128]="MarketPlace_1920x1080_60fps_10bit_420.yuv";
     char configfile[128]="encoder_ra.cfg";
     char* uavs3e_argv[7];
     int uavs3e_argc = 7;

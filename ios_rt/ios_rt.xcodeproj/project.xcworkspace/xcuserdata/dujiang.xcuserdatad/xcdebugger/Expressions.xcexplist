@@ -3,27 +3,10 @@
    version = "1.0">
    <ContextStates>
       <ContextState
-         contextName = "pix_add_32_loop_y:pixel_arm64.S">
+         contextName = "xGetSAD8_arm64:cost_arm64.S">
          <PersistentStrings>
-            <PersistentString
-               value = "$x7">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "get_sad_16_y:cost_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$w0">
-            </PersistentString>
-            <PersistentString
-               value = "$v0">
-            </PersistentString>
             <PersistentString
                value = "$x3">
-            </PersistentString>
-            <PersistentString
-               value = "$v16">
             </PersistentString>
             <PersistentString
                value = "$x4">
@@ -37,10 +20,94 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "get_sad_8_y:cost_arm64.S">
+         contextName = "get_sad_x4_32_y:cost_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$v17">
+            </PersistentString>
+            <PersistentString
+               value = "$v2">
+            </PersistentString>
+            <PersistentString
+               value = "$w9">
+            </PersistentString>
+            <PersistentString
+               value = "$v16">
+            </PersistentString>
+            <PersistentString
+               value = "$v0">
+            </PersistentString>
+            <PersistentString
+               value = "$v1">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "intra_pred_dc_none:intra_pred_arm64.S">
          <PersistentStrings>
             <PersistentString
                value = "$x5">
+            </PersistentString>
+            <PersistentString
+               value = "$x6">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "intra_pred_ver_w16_y:intra_pred_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$v0">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "pre_cal_P_SAD:preprocess.c">
+         <PersistentStrings>
+            <PersistentString
+               value = "ref_img-&gt;i_stride[0]">
+            </PersistentString>
+            <PersistentString
+               value = "org_img-&gt;i_stride[0]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "xGetSAD64_arm64:cost_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$x6">
+            </PersistentString>
+            <PersistentString
+               value = "$x3">
+            </PersistentString>
+            <PersistentString
+               value = "$x4">
+            </PersistentString>
+            <PersistentString
+               value = "$x1">
+            </PersistentString>
+            <PersistentString
+               value = "$x5">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "deblock_ver_luma_arm64:deblock_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$x4">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "com_if_filter_hor_8_y:inter_pred_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$v0">
+            </PersistentString>
+            <PersistentString
+               value = "$v2">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -54,7 +121,7 @@
                value = "$x2">
             </PersistentString>
             <PersistentString
-               value = "$v1">
+               value = "$x8">
             </PersistentString>
             <PersistentString
                value = "$v3">
@@ -66,7 +133,57 @@
                value = "$v31">
             </PersistentString>
             <PersistentString
+               value = "$v1">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "get_psnr_32_x:cost_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$w4">
+            </PersistentString>
+            <PersistentString
+               value = "$v25">
+            </PersistentString>
+            <PersistentString
+               value = "$w5">
+            </PersistentString>
+            <PersistentString
+               value = "$v0">
+            </PersistentString>
+            <PersistentString
+               value = "$v24">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "com_if_filter_ver_8_arm64:inter_pred_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$x7">
+            </PersistentString>
+            <PersistentString
+               value = "$v3">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "xGetSAD32_x4_arm64_10bit:cost_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$w9">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "xGetSAD8_x4_arm64_10bit:cost_arm64.S">
+         <PersistentStrings>
+            <PersistentString
                value = "$x8">
+            </PersistentString>
+            <PersistentString
+               value = "$x9">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -100,6 +217,20 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "if_ver_luma_w8_loop_x:inter_pred_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$v16">
+            </PersistentString>
+            <PersistentString
+               value = "$v29">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "xGetSSE_Psnr:cost.c">
+      </ContextState>
+      <ContextState
          contextName = "intra_pred_ver_w8_y:intra_pred_arm64.S">
          <PersistentStrings>
             <PersistentString
@@ -108,55 +239,36 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "get_sad_x4_32_y:cost_arm64.S">
+         contextName = "xGetSAD8_arm64_10bit:cost_arm64.S">
          <PersistentStrings>
             <PersistentString
-               value = "$v17">
+               value = "$x5">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "get_sad_16_y:cost_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$w0">
             </PersistentString>
             <PersistentString
-               value = "$v2">
+               value = "$x1">
             </PersistentString>
             <PersistentString
-               value = "$v1">
+               value = "$x3">
             </PersistentString>
             <PersistentString
-               value = "$v16">
+               value = "$x5">
             </PersistentString>
             <PersistentString
                value = "$v0">
             </PersistentString>
             <PersistentString
-               value = "$w9">
+               value = "$v16">
             </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "deblock_ver_luma_arm64:deblock_arm64.S">
-         <PersistentStrings>
             <PersistentString
                value = "$x4">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "intra_pred_dc_none:intra_pred_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$x5">
-            </PersistentString>
-            <PersistentString
-               value = "$x6">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "com_if_filter_ver_8_arm64:inter_pred_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$x7">
-            </PersistentString>
-            <PersistentString
-               value = "$v3">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -172,76 +284,18 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "xGetSAD32_x4_arm64_10bit:cost_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$w9">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "xGetSAD8_arm64:cost_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$x3">
-            </PersistentString>
-            <PersistentString
-               value = "$x4">
-            </PersistentString>
-            <PersistentString
-               value = "$x1">
-            </PersistentString>
-            <PersistentString
-               value = "$x5">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "xGetSAD8_x4_arm64_10bit:cost_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$x8">
-            </PersistentString>
-            <PersistentString
-               value = "$x9">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "com_if_filter_hor_8_y:inter_pred_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$v0">
-            </PersistentString>
-            <PersistentString
-               value = "$v2">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "intra_pred_ver_w16_y:intra_pred_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$v0">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "if_ver_luma_w8_loop_x:inter_pred_arm64.S">
-         <PersistentStrings>
-            <PersistentString
-               value = "$v16">
-            </PersistentString>
-            <PersistentString
-               value = "$v29">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "xGetSAD8_arm64_10bit:cost_arm64.S">
+         contextName = "get_sad_8_y:cost_arm64.S">
          <PersistentStrings>
             <PersistentString
                value = "$x5">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "pix_add_32_loop_y:pixel_arm64.S">
+         <PersistentStrings>
+            <PersistentString
+               value = "$x7">
             </PersistentString>
          </PersistentStrings>
       </ContextState>

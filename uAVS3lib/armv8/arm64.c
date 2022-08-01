@@ -86,6 +86,7 @@ void com_funs_init_arm64()
     g_funs_handle.cost_sad[2] = xGetSAD8_arm64;
     g_funs_handle.cost_sad[4] = xGetSAD16_arm64;
     g_funs_handle.cost_sad[8] = xGetSAD32_arm64;
+    g_funs_handle.cost_sad[16] = xGetSAD64_arm64;
     
     g_funs_handle.cost_sad_x4[2] = xGetSAD8_x4_arm64;
     g_funs_handle.cost_sad_x4[4] = xGetSAD16_x4_arm64;
@@ -98,6 +99,8 @@ void com_funs_init_arm64()
     g_funs_handle.cost_ssd[1] = xGetSSE8_arm64;
     g_funs_handle.cost_ssd[2] = xGetSSE16_arm64;
     g_funs_handle.cost_ssd[3] = xGetSSE32_arm64;
+    
+    g_funs_handle.cost_ssd_psnr = xGetSSE_Psnr_arm64;
 
     g_funs_handle.cost_blk_satd[1] = xCalcHAD8x8_arm64;
     

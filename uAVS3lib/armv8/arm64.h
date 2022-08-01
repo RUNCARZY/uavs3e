@@ -10,6 +10,7 @@
 i32u_t xGetSAD8_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);
 i32u_t xGetSAD16_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);
 i32u_t xGetSAD32_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);
+i32u_t xGetSAD64_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height, int skip_lines);
 
 void xGetSAD8_x4_arm64(pel_t *p_org, int i_org, pel_t *pred0, pel_t *pred1, pel_t *pred2, pel_t *pred3, int i_pred, i32u_t sad[4], int height, int skip_lines);
 void xGetSAD16_x4_arm64(pel_t *p_org, int i_org, pel_t *pred0, pel_t *pred1, pel_t *pred2, pel_t *pred3, int i_pred, i32u_t sad[4], int height, int skip_lines);
@@ -22,6 +23,8 @@ i32u_t xGetAVGSAD32_arm64(pel_t *p_org, int i_org, pel_t *pred1, int i_pred1, pe
 i32u_t xGetSSE8_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height);
 i32u_t xGetSSE16_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height);
 i32u_t xGetSSE32_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height);
+
+i64u_t xGetSSE_Psnr_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int iWidth, int iHeight);
 
 i32u_t xCalcHAD8x8_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred);
 

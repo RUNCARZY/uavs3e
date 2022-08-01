@@ -1038,6 +1038,72 @@ get_sad_32_y:
 
     ret
 
+//void xGetSAD64_arm64(pel *p_org, int i_org, pel *pred, int i_pred, int height, int skip_lines)
+//*p_org->x0, i_org->x1, p_pred->x2, i_pred->x3, height->x4, skip_lines->x5
+function xGetSAD64_arm64
+    mov x6, #1
+    lsl x6, x6, x5      //1 << skip_lines
+    lsl x1, x1, #1
+    mul x1, x1, x6
+    lsl x3, x3, #1
+    mul x3, x3, x6
+    lsr x4, x4, x5
+    mov x7, #64
+    sub x1, x1, x7
+    sub x3, x3, x7
+
+    movi v24.16b, #0
+    movi v25.16b, #0
+    movi v26.16b, #0
+    movi v27.16b, #0
+
+get_sad_64_y:
+    //load p_org
+    ld1 {v0.8h, v1.8h, v2.8h, v3.8h}, [x0], x7
+    ld1 {v4.8h, v5.8h, v6.8h, v7.8h}, [x0], x1
+    //load pred
+    ld1 {v16.8h, v17.8h, v18.8h, v19.8h}, [x2], x7
+    ld1 {v20.8h, v21.8h, v22.8h, v23.8h}, [x2], x3
+
+    uabd v0.8h, v0.8h, v16.8h
+    uabd v1.8h, v1.8h, v17.8h
+    uabd v2.8h, v2.8h, v18.8h
+    uabd v3.8h, v3.8h, v19.8h
+    uabd v4.8h, v4.8h, v20.8h
+    uabd v5.8h, v5.8h, v21.8h
+    uabd v6.8h, v6.8h, v22.8h
+    uabd v7.8h, v7.8h, v23.8h
+
+    add v0.8h, v0.8h, v1.8h
+    add v1.8h, v2.8h, v3.8h
+    add v2.8h, v4.8h, v5.8h
+    add v3.8h, v6.8h, v7.8h
+
+    add v24.8h, v24.8h, v0.8h
+    add v25.8h, v25.8h, v1.8h
+    add v26.8h, v26.8h, v2.8h
+    add v27.8h, v27.8h, v3.8h
+
+    subs w4, w4, 1
+    bgt get_sad_64_y
+
+    uaddlp v24.4s, v24.8h
+    uaddlp v25.4s, v25.8h
+    uaddlp v26.4s, v26.8h
+    uaddlp v27.4s, v27.8h
+
+    addp v24.4s, v24.4s, v25.4s
+    addp v26.4s, v26.4s, v27.4s
+    addp v24.4s, v24.4s, v26.4s
+    addp v24.4s, v24.4s, v24.4s
+    addp v24.4s, v24.4s, v24.4s
+
+    mov x0, #0
+    umov w0, v24.s[0]
+    lsl x0, x0, x5
+
+    ret
+
 
 //i32u_t xGetSSE4_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int height);
 //*p_org->x0, i_org->x1, p_pred->x2, i_pred->x3, height->x4
@@ -1693,6 +1759,58 @@ get_sad_avg_32_y:
     umov w0, v16.s[0]
     lsl w0, w0, w7
     ret
+
+//i64u_t xGetSSE_Psnr_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred, int iWidth, int iHeight);
+//*p_org->x0, i_org->x1, p_pred->x2, i_pred->x3, iWidth->x4, iHeight->x5
+function xGetSSE_Psnr_arm64
+    lsl x1, x1, #1
+    lsl x3, x3, #1
+    movi v24.16b, #0
+    movi v25.16b, #0
+    mov w8, w4
+
+get_psnr_32_y:
+    mov x6, x0
+    mov x7, x2
+get_psnr_32_x:
+    //load p_org
+    ld1 {v0.8h, v1.8h, v2.8h, v3.8h}, [x6]
+    //load pred
+    ld1 {v4.8h, v5.8h, v6.8h, v7.8h}, [x7]
+
+    uabd v0.8h, v0.8h, v4.8h
+    uabd v1.8h, v1.8h, v5.8h
+    uabd v2.8h, v2.8h, v6.8h
+    uabd v3.8h, v3.8h, v7.8h
+    
+    umull v24.4s, v0.4h, v0.4h
+    umlal2 v24.4s, v0.8h, v0.8h
+    umlal v24.4s, v1.4h, v1.4h
+    umlal2 v24.4s, v1.8h, v1.8h
+    umlal v24.4s, v2.4h, v2.4h
+    umlal2 v24.4s, v2.8h, v2.8h
+    umlal v24.4s, v3.4h, v3.4h
+    umlal2 v24.4s, v3.8h, v3.8h
+
+    uaddlp v24.2d, v24.4s
+    add v25.2d, v25.2d, v24.2d
+
+    add x6, x6, #64
+    add x7, x7, #64
+
+    subs w4, w4, #32
+    bgt get_psnr_32_x
+    add x0, x0, x1
+    add x2, x2, x3
+    subs w5, w5, #1
+    mov w4, w8
+    bgt get_psnr_32_y
+    
+    addp v25.2d, v25.2d, v25.2d
+    mov x0, v25.d[0]
+
+ret
+
 
 //i32u_t xCalcHAD8x8_arm64(pel_t *p_org, int i_org, pel_t *p_pred, int i_pred);
 //*p_org->x0, i_org->x1, *p_pred->x2, i_pred->x3
