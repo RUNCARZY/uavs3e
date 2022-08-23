@@ -9,11 +9,11 @@
 # get version of remote and local repository
 
 VER_R=`git rev-list origin/master | sort | wc -l | gawk '{print $1}'`
-VER_L=`git rev-list HEAD | sort | wc -l | gawk '{print $1}'`
+VER_L=`git rev-list HEAD ^6123115581dab0d5fcc4e564d9e5d23af5312c8c | sort | wc -l | gawk '{print $1}'`
 VER_SHA1=`git log -n 1 | head -n 1 | cut -d ' ' -f 2`
 
 major_version="1"
-minor_version="0"
+minor_version="1"
 type_version="release"
 
 # generate the file version.h
