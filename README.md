@@ -14,8 +14,8 @@
   For more details, please view the file "COPYING" in the project.
   
 # compile
-  The default configuration only support 8bit decoding. <br>
-  To support 10bit streams decoding:cmake -DCOMPILE_10BIT=1 
+  The default configuration only support 8bit encoding. <br>
+  To support 10bit streams encoding: cmake -DCOMPILE_10BIT=1 
 
 ## windows
 Prerequisites:
@@ -25,7 +25,7 @@ build:
   1. ./version.bat (to generate version.h)
   2. solution file: build/x86_windows/uavs3e.sln 
   
-  To support 10bit streams decoding, edit inc/com_api.h : #define COMPILE_10BIT 1 
+  To support 10bit streams encoding, edit inc/com_api.h : #define COMPILE_10BIT 1 
 
 ## linux
 Prerequisites:
@@ -37,7 +37,7 @@ Build:
   2. cd build/linux && cmake -DCOMPILE_10BIT=0 ../..
   3. make && make install
   
-  To support 10bit streams decoding:cmake -DCOMPILE_10BIT=1
+  To support 10bit streams encoding: cmake -DCOMPILE_10BIT=1
   to build shared library, set BUILD_SHARED_LIBS=1 please.
 
 # Run tests
