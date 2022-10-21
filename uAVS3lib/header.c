@@ -222,7 +222,7 @@ void com_md5_img(image_t *img, unsigned char digest[16])
 
 int IsEqualRps(com_rpl_t *rpl, ref_man * Rps2, int lidx)
 {
-    for (int i = 0; i < MAXGOP; i++) {
+    for (int i = 0; i < 8; i++) {
         com_rpl_t *p;
 
         if (lidx == 0) {
@@ -417,7 +417,7 @@ int WriteSequenceDisplayExtension(bit_stream_t *strm, const cfg_param_t *input, 
 int WriteHdrExtension(bit_stream_t *strm, const hdr_ext_data_t *hdr)
 {
     U_V(32, "sequence display extension start code", 0x1b5, strm);
-    U_V(4, "extension id", 12, strm);
+    U_V(4, "extension id", 10, strm);
 
     U_V(16, "display_primaries_x", hdr->display_primaries_x[0], strm); U_V(1, "marker bit", 1, strm);
     U_V(16, "display_primaries_y", hdr->display_primaries_y[0], strm); U_V(1, "marker bit", 1, strm);
