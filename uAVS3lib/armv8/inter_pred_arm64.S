@@ -1392,11 +1392,17 @@ if_ver_luma_w8_loop_x:
 //void com_if_filter_ver_8_ext_arm64(const pel_t *src, int i_src, pel_t *dst[3], int i_dst, int width, int height, tab_char_t (coeff)[8], int bit_depth);
 //src->x0, i_src->x1, dst[3]->x2, i_dst->x3, width->x4, height->x5, coeff->x6, bit_depth->x7
 function com_if_filter_ver_8_ext_arm64
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+    sub sp, sp, #32
+    st1 {v8.8h, v9.8h}, [sp]
+
     lsl x1, x1, #1
     lsl x3, x3, #1
 
+    mov x19, x7
     mov x7, #1
-    lsl x7, x7, #10
+    lslv x7, x7, x19
     sub x7, x7, #1
     dup v25.8h, w7      //max_val
     mov x7, #0
@@ -1457,57 +1463,76 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
 
-    sqrshrun  v29.4h, v30.4s, #10
-    sqrshrun2 v29.8h, v31.4s, #10
-    smin v29.8h, v29.8h, v25.8h
-    smax v29.8h, v29.8h, v26.8h
-    st1 {v29.8h}, [x13], #16      //d0
+    smull  v8.4s, v17.4h, v1.4h
+    smull2 v9.4s, v17.8h, v1.8h
+    smlsl  v8.4s, v16.4h, v0.4h
+    smlsl2 v9.4s, v16.8h, v0.8h
+    smlsl  v8.4s, v18.4h, v7.4h
+    smlsl2 v9.4s, v18.8h, v7.8h
+    smlal  v8.4s, v19.4h, v24.4h
+    smlal2 v9.4s, v19.8h, v24.8h
+    smlal  v8.4s, v20.4h, v24.4h
+    smlal2 v9.4s, v20.8h, v24.8h
+    smlsl  v8.4s, v21.4h, v7.4h
+    smlsl2 v9.4s, v21.8h, v7.8h
+    smlal  v8.4s, v22.4h, v1.4h
+    smlal2 v9.4s, v22.8h, v1.8h
+    smlsl  v8.4s, v23.4h, v0.4h
+    smlsl2 v9.4s, v23.8h, v0.8h
 
-    smull  v30.4s, v17.4h, v1.4h
-    smull2 v31.4s, v17.8h, v1.8h
-    smlsl  v30.4s, v16.4h, v0.4h
-    smlsl2 v31.4s, v16.8h, v0.8h
-    smlsl  v30.4s, v18.4h, v7.4h
-    smlsl2 v31.4s, v18.8h, v7.8h
-    smlal  v30.4s, v19.4h, v24.4h
-    smlal2 v31.4s, v19.8h, v24.8h
-    smlal  v30.4s, v20.4h, v24.4h
-    smlal2 v31.4s, v20.8h, v24.8h
-    smlsl  v30.4s, v21.4h, v7.4h
-    smlsl2 v31.4s, v21.8h, v7.8h
-    smlal  v30.4s, v22.4h, v1.4h
-    smlal2 v31.4s, v22.8h, v1.8h
-    smlsl  v30.4s, v23.4h, v0.4h
-    smlsl2 v31.4s, v23.8h, v0.8h
+    smull  v27.4s, v17.4h, v6.4h
+    smull2 v28.4s, v17.8h, v6.8h
+    smlsl  v27.4s, v16.4h, v0.4h
+    smlsl2 v28.4s, v16.8h, v0.8h
+    smlsl  v27.4s, v18.4h, v5.4h
+    smlsl2 v28.4s, v18.8h, v5.8h
+    smlal  v27.4s, v19.4h, v4.4h
+    smlal2 v28.4s, v19.8h, v4.8h
+    smlal  v27.4s, v20.4h, v3.4h
+    smlal2 v28.4s, v20.8h, v3.8h
+    smlsl  v27.4s, v21.4h, v2.4h
+    smlsl2 v28.4s, v21.8h, v2.8h
+    smlal  v27.4s, v22.4h, v1.4h
+    smlal2 v28.4s, v22.8h, v1.8h
+    smlsl  v27.4s, v23.4h, v0.4h
+    smlsl2 v28.4s, v23.8h, v0.8h
 
-    sqrshrun  v29.4h, v30.4s, #10
-    sqrshrun2 v29.8h, v31.4s, #10
-    smin v29.8h, v29.8h, v25.8h
-    smax v29.8h, v29.8h, v26.8h
-    st1 {v29.8h}, [x14], #16      //d1
-    
-    smull  v30.4s, v17.4h, v6.4h
-    smull2 v31.4s, v17.8h, v6.8h
-    smlsl  v30.4s, v16.4h, v0.4h
-    smlsl2 v31.4s, v16.8h, v0.8h
-    smlsl  v30.4s, v18.4h, v5.4h
-    smlsl2 v31.4s, v18.8h, v5.8h
-    smlal  v30.4s, v19.4h, v4.4h
-    smlal2 v31.4s, v19.8h, v4.8h
-    smlal  v30.4s, v20.4h, v3.4h
-    smlal2 v31.4s, v20.8h, v3.8h
-    smlsl  v30.4s, v21.4h, v2.4h
-    smlsl2 v31.4s, v21.8h, v2.8h
-    smlal  v30.4s, v22.4h, v1.4h
-    smlal2 v31.4s, v22.8h, v1.8h
-    smlsl  v30.4s, v23.4h, v0.4h
-    smlsl2 v31.4s, v23.8h, v0.8h
-    
-    sqrshrun  v29.4h, v30.4s, #10
-    sqrshrun2 v29.8h, v31.4s, #10
-    smin v29.8h, v29.8h, v25.8h
-    smax v29.8h, v29.8h, v26.8h
-    st1 {v29.8h}, [x15], #16      //d2
+    cmp w19, #10
+    bne if_ver_luma_w8_loop_ext_x_8bit
+
+    sqrshrun  v30.4h, v30.4s, #10
+    sqrshrun2 v30.8h, v31.4s, #10
+
+    sqrshrun  v8.4h, v8.4s, #10
+    sqrshrun2 v8.8h, v9.4s, #10
+
+    sqrshrun  v27.4h, v27.4s, #10
+    sqrshrun2 v27.8h, v28.4s, #10
+
+    b if_ver_luma_w8_loop_ext_x_end
+
+if_ver_luma_w8_loop_ext_x_8bit:
+    sqrshrun  v30.4h, v30.4s, #12
+    sqrshrun2 v30.8h, v31.4s, #12
+
+    sqrshrun  v8.4h, v8.4s, #12
+    sqrshrun2 v8.8h, v9.4s, #12
+
+    sqrshrun  v27.4h, v27.4s, #12
+    sqrshrun2 v27.8h, v28.4s, #12
+
+if_ver_luma_w8_loop_ext_x_end:
+    smin v30.8h, v30.8h, v25.8h
+    smax v30.8h, v30.8h, v26.8h
+    st1 {v30.8h}, [x13], #16      //d0
+
+    smin v8.8h, v8.8h, v25.8h
+    smax v8.8h, v8.8h, v26.8h
+    st1 {v8.8h}, [x14], #16      //d1
+
+    smin v27.8h, v27.8h, v25.8h
+    smax v27.8h, v27.8h, v26.8h
+    st1 {v27.8h}, [x15], #16      //d2
     
     add x11, x11, #16
     subs w10, w10, #8
@@ -1519,6 +1544,8 @@ if_ver_luma_w8_loop_ext_x:
     subs w5, w5, #1
     bgt if_ver_luma_w8_loop_ext_y
 
+    ld1 {v8.8h, v9.8h}, [sp], #32
+    ldp x19, x20, [sp], #16
     ret
 
 //void com_if_filter_hor_4_w4_arm64(const pel_t *src, int i_src, pel_t *dst, int i_dst, int width, int height, char_t const *coeff, int bit_depth);
