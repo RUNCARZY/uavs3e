@@ -1263,8 +1263,8 @@ function com_if_filter_ver_8_arm64
     lsl x1, x1, #1
     lsl x3, x3, #1
 
-    mov x7, #1
-    lsl x7, x7, #10
+    mov x9, #1
+    lslv x7, x9, x7
     sub x7, x7, #1
     dup v25.8h, w7      //max_val
     mov x7, #0
