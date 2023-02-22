@@ -1068,6 +1068,7 @@ function com_if_filter_hor_Ver_4_w16_arm64
 //src->x0, i_src->x1, dst[3]->x2, i_dst->x3, dst_tmp[3]->x4, i_dst_tmp->x5, width->x6, height->x7, coeff->x8
 function com_if_filter_hor_8_arm64
     ldr x8, [sp]    //coeff[3]
+    ldr w10, [sp, #8]
     sub sp, sp, #16
     stp x19, x20, [sp]
     sub sp, sp, #16
@@ -1098,11 +1099,12 @@ function com_if_filter_hor_8_arm64
     lsl x5, x5, #1      //i_dst_tmp
     
     mov x9, #1
-    lsl x9, x9, #10
+    lslv x9, x9, x10
     sub x9, x9, #1
     dup v31.8h, w9      //max_val
     mov x9, #0
     dup v16.8h, w9      //0
+    mov x8, x10
         
     ldr x9, [x2], #8    //d0
     ldr x10, [x2], #8   //d1
@@ -1149,69 +1151,92 @@ com_if_filter_hor_8_x:
     umlal2 v18.4s, v27.8h, v6.8h
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
-    //(t1 + 2) >> 2
-    sqrshrn  v29.4h, v17.4s, #2
-    sqrshrn2 v29.8h, v18.4s, #2        //dt0
+
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d0
-
     umin v30.8h, v30.8h, v31.8h
-    st1 {v29.8h}, [x22], #16
     st1 {v30.8h}, [x19], #16
 
-    umull  v17.4s, v22.4h, v1.4h
-    umull2 v18.4s, v22.8h, v1.8h
-    umlsl  v17.4s, v20.4h, v0.4h
-    umlsl2 v18.4s, v20.8h, v0.8h
-    umlsl  v17.4s, v23.4h, v7.4h
-    umlsl2 v18.4s, v23.8h, v7.8h
-    umlal  v17.4s, v24.4h, v8.4h
-    umlal2 v18.4s, v24.8h, v8.8h
-    umlal  v17.4s, v25.4h, v8.4h
-    umlal2 v18.4s, v25.8h, v8.8h
-    umlsl  v17.4s, v26.4h, v7.4h
-    umlsl2 v18.4s, v26.8h, v7.8h
-    umlal  v17.4s, v27.4h, v1.4h
-    umlal2 v18.4s, v27.8h, v1.8h
-    umlsl  v17.4s, v28.4h, v0.4h
-    umlsl2 v18.4s, v28.8h, v0.8h
-    //(t1+2)>>2
-    sqrshrn  v29.4h, v17.4s, #2
-    sqrshrn2 v29.8h, v18.4s, #2        //dt1
+    umull  v9.4s, v22.4h, v1.4h
+    umull2 v10.4s, v22.8h, v1.8h
+    umlsl  v9.4s, v20.4h, v0.4h
+    umlsl2 v10.4s, v20.8h, v0.8h
+    umlsl  v9.4s, v23.4h, v7.4h
+    umlsl2 v10.4s, v23.8h, v7.8h
+    umlal  v9.4s, v24.4h, v8.4h
+    umlal2 v10.4s, v24.8h, v8.8h
+    umlal  v9.4s, v25.4h, v8.4h
+    umlal2 v10.4s, v25.8h, v8.8h
+    umlsl  v9.4s, v26.4h, v7.4h
+    umlsl2 v10.4s, v26.8h, v7.8h
+    umlal  v9.4s, v27.4h, v1.4h
+    umlal2 v10.4s, v27.8h, v1.8h
+    umlsl  v9.4s, v28.4h, v0.4h
+    umlsl2 v10.4s, v28.8h, v0.8h
+
     //(t1 + 32) >> 6
-    sqrshrun  v30.4h, v17.4s, #6
-    sqrshrun2 v30.8h, v18.4s, #6        //d1
+    sqrshrun  v30.4h, v9.4s, #6
+    sqrshrun2 v30.8h, v10.4s, #6        //d1
     umin v30.8h, v30.8h, v31.8h
-    st1 {v29.8h}, [x23], #16
     st1 {v30.8h}, [x20], #16
 
-    smull  v17.4s, v22.4h, v6.4h
-    smull2 v18.4s, v22.8h, v6.8h
-    smlsl  v17.4s, v20.4h, v0.4h
-    smlsl2 v18.4s, v20.8h, v0.8h
-    smlsl  v17.4s, v23.4h, v5.4h
-    smlsl2 v18.4s, v23.8h, v5.8h
-    smlal  v17.4s, v24.4h, v4.4h
-    smlal2 v18.4s, v24.8h, v4.8h
-    smlal  v17.4s, v25.4h, v3.4h
-    smlal2 v18.4s, v25.8h, v3.8h
-    smlsl  v17.4s, v26.4h, v2.4h
-    smlsl2 v18.4s, v26.8h, v2.8h
-    smlal  v17.4s, v27.4h, v1.4h
-    smlal2 v18.4s, v27.8h, v1.8h
-    smlsl  v17.4s, v28.4h, v0.4h
-    smlsl2 v18.4s, v28.8h, v0.8h
-    //(t1+2)>>2
-    sqrshrn  v29.4h, v17.4s, #2
-    sqrshrn2 v29.8h, v18.4s, #2        //dt2
-    //(t1 + 32) >> 6
-    sqrshrun  v30.4h, v17.4s, #6
-    sqrshrun2 v30.8h, v18.4s, #6        //d2
+    smull  v11.4s, v22.4h, v6.4h
+    smull2 v19.4s, v22.8h, v6.8h
+    smlsl  v11.4s, v20.4h, v0.4h
+    smlsl2 v19.4s, v20.8h, v0.8h
+    smlsl  v11.4s, v23.4h, v5.4h
+    smlsl2 v19.4s, v23.8h, v5.8h
+    smlal  v11.4s, v24.4h, v4.4h
+    smlal2 v19.4s, v24.8h, v4.8h
+    smlal  v11.4s, v25.4h, v3.4h
+    smlal2 v19.4s, v25.8h, v3.8h
+    smlsl  v11.4s, v26.4h, v2.4h
+    smlsl2 v19.4s, v26.8h, v2.8h
+    smlal  v11.4s, v27.4h, v1.4h
+    smlal2 v19.4s, v27.8h, v1.8h
+    smlsl  v11.4s, v28.4h, v0.4h
+    smlsl2 v19.4s, v28.8h, v0.8h
 
+    //(t1 + 32) >> 6
+    sqrshrun  v30.4h, v11.4s, #6
+    sqrshrun2 v30.8h, v19.4s, #6        //d2
     umin v30.8h, v30.8h, v31.8h
-    st1 {v29.8h}, [x24], #16
     st1 {v30.8h}, [x21], #16
+
+    cmp w8, #10
+    bne com_if_filter_hor_8_x_8bit
+
+    //(t1 + 2) >> 2
+    sqrshrn  v17.4h, v17.4s, #2
+    sqrshrn2 v17.8h, v18.4s, #2        //dt0
+
+    //(t1 + 2)>>2
+    sqrshrn  v9.4h, v9.4s, #2
+    sqrshrn2 v9.8h, v10.4s, #2        //dt1
+
+    //(t1 + 2)>>2
+    sqrshrn  v11.4h, v11.4s, #2
+    sqrshrn2 v11.8h, v19.4s, #2        //dt2
+    b com_if_filter_hor_8_x_end
+
+com_if_filter_hor_8_x_8bit:
+    //(t1 + 2) >> 0
+    sqxtn  v17.4h, v17.4s
+    sqxtn2 v17.8h, v18.4s        //dt0
+
+    //(t1 + 2) >> 0
+    sqxtn  v9.4h, v9.4s
+    sqxtn2 v9.8h, v10.4s        //dt1
+
+    //(t1 + 2) >> 0
+    sqxtn  v11.4h, v11.4s
+    sqxtn2 v11.8h, v19.4s        //dt2
+
+com_if_filter_hor_8_x_end:
+    st1 {v17.8h}, [x22], #16
+    st1 {v9.8h}, [x23], #16
+    st1 {v11.8h}, [x24], #16
 
     subs w16, w16, #8
     bgt com_if_filter_hor_8_x
