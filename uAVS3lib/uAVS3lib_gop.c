@@ -180,7 +180,7 @@ void avs3gop_lib_free(void *handle)
     avs3gop_t *g = (avs3gop_t *)handle;
  
     for (i = 0; i < g->objs; i++) {
-        avs3_lib_encode(g->obj_list[i].enc, 2, 1);
+        avs3_lib_encode(g->obj_list[i].enc, 1, 1);
         avs3_lib_free(g->obj_list[i].enc);
         com_free(g->obj_list[i].strm_buf);
     }
