@@ -254,7 +254,7 @@ intra_pred_dc_1ref_w32:
 
 intra_pred_dc_none:
 
-    movi v0.16b, #512			// iDCValue = 1 << (sample_bit_depth - 1);
+    movi v0.16b, #128			// iDCValue = 1 << (sample_bit_depth - 1);
     b intra_pred_dc_fillblock
 
 intra_pred_dc_above_left:
