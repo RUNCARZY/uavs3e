@@ -165,7 +165,7 @@ intra_pred_hor_end:
 
 
 //void xPredIntraDCAdi_arm64(pel_t *pSrc, pel_t *dst, int i_dst, int iWidth, int iHeight, int bAboveAvail, int bLeftAvail, bit_depth)
-//src->x0, dst->x1, i_dst->x2, width->x3, height->x4, bAboveAvail->x5, bLeftAvail->x6
+//src->x0, dst->x1, i_dst->x2, width->x3, height->x4, bAboveAvail->x5, bLeftAvail->x6, bit_depth->x7
 function xPredIntraDCAdi_arm64
     and w9, w6, w5
     cmp w9, #0
@@ -254,7 +254,7 @@ intra_pred_dc_1ref_w32:
 
 intra_pred_dc_none:
 
-    movi v0.16b, #128			// iDCValue = 1 << (sample_bit_depth - 1);
+    movi v0.16b, #512			// iDCValue = 1 << (sample_bit_depth - 1);
     b intra_pred_dc_fillblock
 
 intra_pred_dc_above_left:
@@ -1733,6 +1733,8 @@ function xPredIntraDCAdi_arm64
     lsl x2, x2, #1
     lsl x12, x4, #1
 
+    sub x14, x7, #1
+
     and w7, w6, #1          // left avail
     and w8, w5, #1          // up avail
 
@@ -1855,8 +1857,9 @@ intra_pred_dc_1ref_w64:
     b intra_pred_dc_fillblock
 
 intra_pred_dc_none:
-    mov w9, #512
-    dup v0.8h, w9			// iDCValue = 1 << (sample_bit_depth - 1);
+    mov x13, #1
+    lsl x13, x13, x14
+    dup v0.8h, w13			// iDCValue = 1 << (sample_bit_depth - 1);
     b intra_pred_dc_fillblock
 
 intra_pred_dc_above_left:

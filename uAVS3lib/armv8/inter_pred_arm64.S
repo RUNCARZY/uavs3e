@@ -1068,15 +1068,20 @@ function com_if_filter_hor_Ver_4_w16_arm64
 //src->x0, i_src->x1, dst[3]->x2, i_dst->x3, dst_tmp[3]->x4, i_dst_tmp->x5, width->x6, height->x7, coeff->x8
 function com_if_filter_hor_8_arm64
     ldr x8, [sp]    //coeff[3]
+    ldr w9, [sp, #8]
+
     sub sp, sp, #16
     stp x19, x20, [sp]
     sub sp, sp, #16
     stp x21, x22, [sp]
     sub sp, sp, #16
     stp x23, x24, [sp]
+    sub sp, sp, #16
+    stp x25, x26, [sp]
     sub sp, sp, #64
     st1 {v8.8h - v11.8h}, [sp]
 
+    mov w25, w9     //bit_depth
     ld1 {v0.d}[0], [x8], #8
     abs v0.8b, v0.8b
     uxtl v31.8h, v0.8b
@@ -1096,11 +1101,12 @@ function com_if_filter_hor_8_arm64
     lsl x1, x1, #1      //i_src
     lsl x3, x3, #1      //i_dst
     lsl x5, x5, #1      //i_dst_tmp
-    
+
     mov x9, #1
-    lsl x9, x9, #10
+    lsl x9, x9, x25
     sub x9, x9, #1
     dup v31.8h, w9      //max_val
+    
     mov x9, #0
     dup v16.8h, w9      //0
         
@@ -1149,9 +1155,20 @@ com_if_filter_hor_8_x:
     umlal2 v18.4s, v27.8h, v6.8h
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
+
+    cmp w25, #10
+    bne filter_hor_8_shift8_d0
     //(t1 + 2) >> 2
     sqrshrn  v29.4h, v17.4s, #2
     sqrshrn2 v29.8h, v18.4s, #2        //dt0
+    b filter_hor_8_shift8_end_d0
+
+filter_hor_8_shift8_d0:
+    xtn  v29.4h, v17.4s
+    xtn2 v29.8h, v18.4s       //dt0
+    //(t1 + 32) >> 6
+
+filter_hor_8_shift8_end_d0:
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d0
@@ -1176,12 +1193,23 @@ com_if_filter_hor_8_x:
     umlal2 v18.4s, v27.8h, v1.8h
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
-    //(t1+2)>>2
+
+    cmp w25, #10
+    bne filter_hor_8_shift8_d1
+    //(t1 + 2) >> 2
     sqrshrn  v29.4h, v17.4s, #2
     sqrshrn2 v29.8h, v18.4s, #2        //dt1
+    b filter_hor_8_shift8_end_d1
+    
+    filter_hor_8_shift8_d1:
+    xtn  v29.4h, v17.4s
+    xtn2 v29.8h, v18.4s       //dt1
+    
+filter_hor_8_shift8_end_d1:
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d1
+
     umin v30.8h, v30.8h, v31.8h
     st1 {v29.8h}, [x23], #16
     st1 {v30.8h}, [x20], #16
@@ -1202,9 +1230,19 @@ com_if_filter_hor_8_x:
     smlal2 v18.4s, v27.8h, v1.8h
     smlsl  v17.4s, v28.4h, v0.4h
     smlsl2 v18.4s, v28.8h, v0.8h
-    //(t1+2)>>2
+
+    cmp w25, #10
+    bne filter_hor_8_shift8_d2
+    //(t1 + 2) >> 2
     sqrshrn  v29.4h, v17.4s, #2
     sqrshrn2 v29.8h, v18.4s, #2        //dt2
+    b filter_hor_8_shift8_end_d2
+    
+filter_hor_8_shift8_d2:
+    xtn  v29.4h, v17.4s
+    xtn2 v29.8h, v18.4s       //dt2
+    
+filter_hor_8_shift8_end_d2:
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d2
@@ -1226,6 +1264,7 @@ com_if_filter_hor_8_x:
     bgt com_if_filter_hor_8_y
 
     ld1 {v8.8h - v11.8h}, [sp], #64
+    ldp x25, x26, [sp], #16
     ldp x23, x24, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x19, x20, [sp], #16
@@ -1237,14 +1276,14 @@ com_if_filter_hor_8_x:
 function com_if_filter_ver_8_arm64
     lsl x1, x1, #1
     lsl x3, x3, #1
-
-    mov x7, #1
-    lsl x7, x7, #10
-    sub x7, x7, #1
-    dup v25.8h, w7      //max_val
+    
+    mov x8, #1
+    lsl x8, x8, x7
+    sub x8, x8, #1
+    dup v25.8h, w8      //max_val
     mov x7, #0
     dup v26.8h, w7      //0
-
+    
     ld1 {v31.d}[0], [x6]
     abs  v31.8b, v31.8b
     uxtl v31.8h, v31.8b
@@ -1369,11 +1408,14 @@ if_ver_luma_w8_loop_x:
 function com_if_filter_ver_8_ext_arm64
     lsl x1, x1, #1
     lsl x3, x3, #1
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+    mov x19, x7
 
-    mov x7, #1
-    lsl x7, x7, #10
-    sub x7, x7, #1
-    dup v25.8h, w7      //max_val
+    mov x8, #1
+    lsl x8, x8, x7
+    sub x8, x8, #1
+    dup v25.8h, w8      //max_val
     mov x7, #0
     dup v26.8h, w7      //0
 
@@ -1432,8 +1474,17 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
 
+    cmp w19, #10
+    bne if_filter_ver_8_ext_8bit_d0
     sqrshrun  v29.4h, v30.4s, #10
     sqrshrun2 v29.8h, v31.4s, #10
+    b if_filter_ver_8_ext_8bit_end_d0
+
+if_filter_ver_8_ext_8bit_d0:
+    sqrshrun  v29.4h, v30.4s, #12
+    sqrshrun2 v29.8h, v31.4s, #12
+
+if_filter_ver_8_ext_8bit_end_d0:
     smin v29.8h, v29.8h, v25.8h
     smax v29.8h, v29.8h, v26.8h
     st1 {v29.8h}, [x13], #16      //d0
@@ -1455,8 +1506,17 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
 
+    cmp w19, #10
+    bne if_filter_ver_8_ext_8bit_d1
     sqrshrun  v29.4h, v30.4s, #10
     sqrshrun2 v29.8h, v31.4s, #10
+    b if_filter_ver_8_ext_8bit_end_d1
+    
+if_filter_ver_8_ext_8bit_d1:
+    sqrshrun  v29.4h, v30.4s, #12
+    sqrshrun2 v29.8h, v31.4s, #12
+    
+if_filter_ver_8_ext_8bit_end_d1:
     smin v29.8h, v29.8h, v25.8h
     smax v29.8h, v29.8h, v26.8h
     st1 {v29.8h}, [x14], #16      //d1
@@ -1478,8 +1538,17 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
     
+    cmp w19, #10
+    bne if_filter_ver_8_ext_8bit_d2
     sqrshrun  v29.4h, v30.4s, #10
     sqrshrun2 v29.8h, v31.4s, #10
+    b if_filter_ver_8_ext_8bit_end_d2
+    
+if_filter_ver_8_ext_8bit_d2:
+    sqrshrun  v29.4h, v30.4s, #12
+    sqrshrun2 v29.8h, v31.4s, #12
+    
+if_filter_ver_8_ext_8bit_end_d2:
     smin v29.8h, v29.8h, v25.8h
     smax v29.8h, v29.8h, v26.8h
     st1 {v29.8h}, [x15], #16      //d2
@@ -1493,6 +1562,8 @@ if_ver_luma_w8_loop_ext_x:
     add x9, x9, x3
     subs w5, w5, #1
     bgt if_ver_luma_w8_loop_ext_y
+
+    ldp x19, x20, [sp], #16
 
     ret
 
@@ -1927,11 +1998,12 @@ if_ver_chroma_w16_loop_y:
     ret
 
 //void com_if_filter_hor_ver_4_w8_arm64(const pel *src, int i_src, pel *dst, int i_dst, int width, int height, const s8 *coeff_h, const s8 *coeff_v, int bit_depth)
-//src->x0, i_src->x1, dst->x2, i_dst->x3, width->x4, height->x5, coeff_h->x6, coeff_v->x7
+//src->x0, i_src->x1, dst->x2, i_dst->x3, width->x4, height->x5, coeff_h->x6, coeff_v->x7, bit_depth->x8
 function com_if_filter_hor_ver_4_w8_arm64
-    mov x8, #1
-    lsl x8, x8, #10
-    sub x8, x8, #1
+    ldr w8, [sp]
+    mov x9, #1
+    lsl x9, x9, x8
+    sub x9, x9, #1
 
     sub sp, sp, #16
     st1 {v15.2d}, [sp]
@@ -1951,7 +2023,7 @@ function com_if_filter_hor_ver_4_w8_arm64
 // HOR
 //--------------------------------
     ld1 {v4.s}[0], [x6]
-    dup  v15.8h, w8
+    dup  v15.8h, w9
     abs  v3.8b, v4.8b
     uxtl v3.8h, v3.8b
     dup v0.8h, v3.h[0]
@@ -2004,18 +2076,32 @@ function com_if_filter_hor_ver_4_w8_arm64
     umlsl  v16.4s, v30.4h, v3.4h
     umlsl2 v17.4s, v30.8h, v3.8h
 
+    cmp w8, #10
+    bne if_filter_hor_ver_4_w8_8bit
+
     rshrn  v4.4h, v4.4s, #2
     rshrn2 v4.8h, v5.4s, #2
     rshrn  v5.4h, v6.4s, #2
     rshrn2 v5.8h, v7.4s, #2
     rshrn  v6.4h, v16.4s, #2
     rshrn2 v6.8h, v17.4s, #2
+    b if_filter_hor_ver_4_w8_8bit_end
+
+if_filter_hor_ver_4_w8_8bit:
+    xtn  v4.4h, v4.4s
+    xtn2 v4.8h, v5.4s
+    xtn  v5.4h, v6.4s
+    xtn2 v5.8h, v7.4s
+    xtn  v6.4h, v16.4s
+    xtn2 v6.8h, v17.4s
+
+if_filter_hor_ver_4_w8_8bit_end:
 
     st1 {v4.8h, v5.8h}, [x17], #32
     st1 {v6.8h}, [x17], #16
 
     // the next height rows
-    mov w8, w5
+    mov w9, w5
 if_hor_ver_chroma_w8_hor_10bit_loop_y:
     ld1 {v16.8h, v17.8h}, [x0], x1          // src[x-1]
     ld1 {v18.8h, v19.8h}, [x0], x1          // src[x-1]
@@ -2055,10 +2141,21 @@ if_hor_ver_chroma_w8_hor_10bit_loop_y:
     umlsl2 v6.4s, v26.8h, v3.8h
     umlsl2 v7.4s, v29.8h, v3.8h
 
+    cmp w8, #10
+    bne if_filter_hor_ver_4_w8_8bit_1
     rshrn  v4.4h, v4.4s, #2
     rshrn2 v4.8h, v6.4s, #2
     rshrn  v5.4h, v5.4s, #2
     rshrn2 v5.8h, v7.4s, #2
+    b if_filter_hor_ver_4_w8_8bit_1_end
+
+if_filter_hor_ver_4_w8_8bit_1:
+    xtn v4.4h, v4.4s
+    xtn2 v4.8h, v6.4s
+    xtn v5.4h, v5.4s
+    xtn2 v5.8h, v7.4s
+
+if_filter_hor_ver_4_w8_8bit_1_end:
 
     st1 {v4.8h, v5.8h}, [x17], #32
 
@@ -2079,12 +2176,23 @@ if_hor_ver_chroma_w8_hor_10bit_loop_y:
     umlsl2 v6.4s, v17.8h, v3.8h
     umlsl2 v7.4s, v23.8h, v3.8h
 
+    cmp w8, #10
+    bne if_filter_hor_ver_4_w8_8bit_2
     rshrn  v4.4h, v4.4s, #2
     rshrn2 v4.8h, v6.4s, #2
     rshrn  v5.4h, v5.4s, #2
     rshrn2 v5.8h, v7.4s, #2
+    b if_filter_hor_ver_4_w8_8bit_2_end
+    
+if_filter_hor_ver_4_w8_8bit_2:
+    xtn v4.4h, v4.4s
+    xtn2 v4.8h, v6.4s
+    xtn v5.4h, v5.4s
+    xtn2 v5.8h, v7.4s
+    
+if_filter_hor_ver_4_w8_8bit_2_end:
 
-    subs w8, w8, #4
+    subs w9, w9, #4
 
     st1 {v4.8h, v5.8h}, [x17], #32
     bgt if_hor_ver_chroma_w8_hor_10bit_loop_y
@@ -2136,6 +2244,8 @@ if_hor_ver_chroma_w8_ver_10bit_loop_y:
     smlal  v30.4s, v22.4h, v0.h[3]
     smlal2 v31.4s, v22.8h, v0.h[3]
 
+    cmp w8, #10
+    bne if_filter_hor_ver_4_w8_8bit_3
     sqrshrun  v24.4h, v24.4s, #10
     sqrshrun2 v24.8h, v25.4s, #10
     sqrshrun  v25.4h, v26.4s, #10
@@ -2144,7 +2254,20 @@ if_hor_ver_chroma_w8_ver_10bit_loop_y:
     sqrshrun2 v26.8h, v29.4s, #10
     sqrshrun  v27.4h, v30.4s, #10
     sqrshrun2 v27.8h, v31.4s, #10
+    b if_filter_hor_ver_4_w8_8bit_3_end
 
+if_filter_hor_ver_4_w8_8bit_3:
+    sqrshrun  v24.4h, v24.4s, #12
+    sqrshrun2 v24.8h, v25.4s, #12
+    sqrshrun  v25.4h, v26.4s, #12
+    sqrshrun2 v25.8h, v27.4s, #12
+    sqrshrun  v26.4h, v28.4s, #12
+    sqrshrun2 v26.8h, v29.4s, #12
+    sqrshrun  v27.4h, v30.4s, #12
+    sqrshrun2 v27.8h, v31.4s, #12
+
+if_filter_hor_ver_4_w8_8bit_3_end:
+    
     umin v24.8h, v24.8h, v15.8h
     umin v25.8h, v25.8h, v15.8h
     umin v26.8h, v26.8h, v15.8h
@@ -2166,9 +2289,10 @@ if_hor_ver_chroma_w8_ver_10bit_loop_y:
 //void com_if_filter_hor_Ver_4_w16_arm64(const pel *src, int i_src, pel *dst, int i_dst, int width, int height, const s8 *coeff_h, const s8n 0- *coeff_v, int bit_depth)
 //src->x0, i_src->x1, dst->x2, i_dst->x3, width->x4, height->x5, coeff_h->x6, coeff_v->x7
 function com_if_filter_hor_Ver_4_w16_arm64
-    mov x8, #1
-    lsl x8, x8, #10
-    sub x8, x8, #1
+    ldr w8, [sp]
+    mov x9, #1
+    lsl x9, x9, x8
+    sub x9, x9, #1
 
     sub sp, sp, #16
     st1 {v15.2d}, [sp]
@@ -2188,7 +2312,7 @@ function com_if_filter_hor_Ver_4_w16_arm64
 // HOR
 //--------------------------------
     ld1 {v4.s}[0], [x6]
-    dup v15.8h, w8
+    dup v15.8h, w9
     abs v3.8b, v4.8b
     uxtl v3.8h, v3.8b
 
@@ -2199,7 +2323,7 @@ function com_if_filter_hor_Ver_4_w16_arm64
     sub x0, x0, #2                          // x - 1 UV
     sub x1, x1, #32
 
-    add w8, w5, #3
+    add w11, w5, #3
 if_hor_ver_chroma_w16_hor_10bit_loop_y:
     ld1 {v16.8h, v17.8h}, [x0], #32         // src[x-1]
     ld1 {v18.8h}, [x0], x1
@@ -2229,12 +2353,23 @@ if_hor_ver_chroma_w16_hor_10bit_loop_y:
     umlsl  v30.4s, v24.4h, v3.4h
     umlsl2 v31.4s, v24.8h, v3.8h
 
+cmp w8, #10
+bne if_filter_hor_ver_4_w16_8bit_1
     rshrn  v28.4h, v28.4s, #2
     rshrn2 v28.8h, v29.4s, #2
     rshrn  v29.4h, v30.4s, #2
     rshrn2 v29.8h, v31.4s, #2
+b if_filter_hor_ver_4_w16_8bit_1_end
 
-    subs w8, w8, #1
+if_filter_hor_ver_4_w16_8bit_1:
+    xtn v28.4h, v28.4s
+    xtn2 v28.8h, v29.4s
+    xtn v29.4h, v30.4s
+    xtn2 v29.8h, v31.4s
+
+if_filter_hor_ver_4_w16_8bit_1_end:
+
+    subs w11, w11, #1
     st1 {v28.8h, v29.8h}, [x17], #32
     bgt if_hor_ver_chroma_w16_hor_10bit_loop_y
 
@@ -2286,6 +2421,8 @@ if_hor_ver_chroma_w16_ver_10bit_loop_y:
     smlal  v30.4s, v3.4h, v0.h[3]
     smlal2 v31.4s, v3.8h, v0.h[3]
 
+    cmp w8, #10
+    bne if_filter_hor_ver_4_w16_8bit_2
     sqrshrun  v24.4h, v24.4s, #10
     sqrshrun2 v24.8h, v25.4s, #10
     sqrshrun  v25.4h, v26.4s, #10
@@ -2294,6 +2431,19 @@ if_hor_ver_chroma_w16_ver_10bit_loop_y:
     sqrshrun2 v26.8h, v29.4s, #10
     sqrshrun  v27.4h, v30.4s, #10
     sqrshrun2 v27.8h, v31.4s, #10
+    b if_filter_hor_ver_4_w16_8bit_2_end
+
+if_filter_hor_ver_4_w16_8bit_2:
+    sqrshrun  v24.4h, v24.4s, #12
+    sqrshrun2 v24.8h, v25.4s, #12
+    sqrshrun  v25.4h, v26.4s, #12
+    sqrshrun2 v25.8h, v27.4s, #12
+    sqrshrun  v26.4h, v28.4s, #12
+    sqrshrun2 v26.8h, v29.4s, #12
+    sqrshrun  v27.4h, v30.4s, #12
+    sqrshrun2 v27.8h, v31.4s, #12
+
+if_filter_hor_ver_4_w16_8bit_2_end:
 
     umin v24.8h, v24.8h, v15.8h
     umin v25.8h, v25.8h, v15.8h
