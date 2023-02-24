@@ -1068,6 +1068,7 @@ function com_if_filter_hor_Ver_4_w16_arm64
 //src->x0, i_src->x1, dst[3]->x2, i_dst->x3, dst_tmp[3]->x4, i_dst_tmp->x5, width->x6, height->x7, coeff->x8
 function com_if_filter_hor_8_arm64
     ldr x8, [sp]    //coeff[3]
+    ldr w10, [sp, #8]
     sub sp, sp, #16
     stp x19, x20, [sp]
     sub sp, sp, #16
@@ -1098,11 +1099,12 @@ function com_if_filter_hor_8_arm64
     lsl x5, x5, #1      //i_dst_tmp
     
     mov x9, #1
-    lsl x9, x9, #10
+    lslv x9, x9, x10
     sub x9, x9, #1
     dup v31.8h, w9      //max_val
     mov x9, #0
     dup v16.8h, w9      //0
+    mov x8, x10
         
     ldr x9, [x2], #8    //d0
     ldr x10, [x2], #8   //d1
@@ -1150,8 +1152,16 @@ com_if_filter_hor_8_x:
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
     //(t1 + 2) >> 2
+    cmp w8, #10
+    bne com_if_filter_hor_8_dt0_8bit
     sqrshrn  v29.4h, v17.4s, #2
     sqrshrn2 v29.8h, v18.4s, #2        //dt0
+    b com_if_filter_hor_8_dt0_end
+com_if_filter_hor_8_dt0_8bit:
+    sqxtn  v29.4h, v17.4s
+    sqxtn2 v29.8h, v18.4s        //dt0
+com_if_filter_hor_8_dt0_end:
+
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d0
@@ -1177,8 +1187,16 @@ com_if_filter_hor_8_x:
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
     //(t1+2)>>2
+    cmp w8, #10
+    bne com_if_filter_hor_8_dt1_8bit
     sqrshrn  v29.4h, v17.4s, #2
     sqrshrn2 v29.8h, v18.4s, #2        //dt1
+    b com_if_filter_hor_8_dt1_end
+com_if_filter_hor_8_dt1_8bit:
+    sqxtn  v29.4h, v17.4s
+    sqxtn2 v29.8h, v18.4s        //dt1
+com_if_filter_hor_8_dt1_end:
+
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d1
@@ -1203,8 +1221,16 @@ com_if_filter_hor_8_x:
     smlsl  v17.4s, v28.4h, v0.4h
     smlsl2 v18.4s, v28.8h, v0.8h
     //(t1+2)>>2
+    cmp w8, #10
+    bne com_if_filter_hor_8_dt2_8bit
     sqrshrn  v29.4h, v17.4s, #2
     sqrshrn2 v29.8h, v18.4s, #2        //dt2
+    b com_if_filter_hor_8_dt2_end
+com_if_filter_hor_8_dt2_8bit:
+    sqxtn  v29.4h, v17.4s
+    sqxtn2 v29.8h, v18.4s        //dt2
+com_if_filter_hor_8_dt2_end:
+
     //(t1 + 32) >> 6
     sqrshrun  v30.4h, v17.4s, #6
     sqrshrun2 v30.8h, v18.4s, #6        //d2
@@ -1238,8 +1264,8 @@ function com_if_filter_ver_8_arm64
     lsl x1, x1, #1
     lsl x3, x3, #1
 
-    mov x7, #1
-    lsl x7, x7, #10
+    mov x9, #1
+    lslv x7, x9, x7
     sub x7, x7, #1
     dup v25.8h, w7      //max_val
     mov x7, #0
@@ -1367,11 +1393,15 @@ if_ver_luma_w8_loop_x:
 //void com_if_filter_ver_8_ext_arm64(const pel_t *src, int i_src, pel_t *dst[3], int i_dst, int width, int height, tab_char_t (coeff)[8], int bit_depth);
 //src->x0, i_src->x1, dst[3]->x2, i_dst->x3, width->x4, height->x5, coeff->x6, bit_depth->x7
 function com_if_filter_ver_8_ext_arm64
+    sub sp, sp, #16
+    stp x19, x20, [sp]
+
     lsl x1, x1, #1
     lsl x3, x3, #1
 
+    mov x19, x7
     mov x7, #1
-    lsl x7, x7, #10
+    lslv x7, x7, x19
     sub x7, x7, #1
     dup v25.8h, w7      //max_val
     mov x7, #0
@@ -1432,8 +1462,15 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
 
+    cmp w19, #10
+    bne if_ver_luma_w8_loop_ext_x_d0_8bit
     sqrshrun  v29.4h, v30.4s, #10
     sqrshrun2 v29.8h, v31.4s, #10
+    b if_ver_luma_w8_loop_ext_x_d0_end
+if_ver_luma_w8_loop_ext_x_d0_8bit:
+    sqrshrun  v29.4h, v30.4s, #12
+    sqrshrun2 v29.8h, v31.4s, #12
+if_ver_luma_w8_loop_ext_x_d0_end:
     smin v29.8h, v29.8h, v25.8h
     smax v29.8h, v29.8h, v26.8h
     st1 {v29.8h}, [x13], #16      //d0
@@ -1455,8 +1492,15 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
 
+    cmp w19, #10
+    bne if_ver_luma_w8_loop_ext_x_d1_8bit
     sqrshrun  v29.4h, v30.4s, #10
     sqrshrun2 v29.8h, v31.4s, #10
+    b if_ver_luma_w8_loop_ext_x_d1_end
+if_ver_luma_w8_loop_ext_x_d1_8bit:
+    sqrshrun  v29.4h, v30.4s, #12
+    sqrshrun2 v29.8h, v31.4s, #12
+if_ver_luma_w8_loop_ext_x_d1_end:
     smin v29.8h, v29.8h, v25.8h
     smax v29.8h, v29.8h, v26.8h
     st1 {v29.8h}, [x14], #16      //d1
@@ -1478,8 +1522,15 @@ if_ver_luma_w8_loop_ext_x:
     smlsl  v30.4s, v23.4h, v0.4h
     smlsl2 v31.4s, v23.8h, v0.8h
     
+    cmp w19, #10
+    bne if_ver_luma_w8_loop_ext_x_d2_8bit
     sqrshrun  v29.4h, v30.4s, #10
     sqrshrun2 v29.8h, v31.4s, #10
+    b if_ver_luma_w8_loop_ext_x_d2_end
+if_ver_luma_w8_loop_ext_x_d2_8bit:
+    sqrshrun  v29.4h, v30.4s, #12
+    sqrshrun2 v29.8h, v31.4s, #12
+if_ver_luma_w8_loop_ext_x_d2_end:
     smin v29.8h, v29.8h, v25.8h
     smax v29.8h, v29.8h, v26.8h
     st1 {v29.8h}, [x15], #16      //d2
@@ -1494,6 +1545,7 @@ if_ver_luma_w8_loop_ext_x:
     subs w5, w5, #1
     bgt if_ver_luma_w8_loop_ext_y
 
+    ldp x19, x20, [sp], #16
     ret
 
 //void com_if_filter_hor_4_w4_arm64(const pel_t *src, int i_src, pel_t *dst, int i_dst, int width, int height, char_t const *coeff, int bit_depth);
