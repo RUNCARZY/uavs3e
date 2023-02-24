@@ -1068,7 +1068,7 @@ function com_if_filter_hor_Ver_4_w16_arm64
 //src->x0, i_src->x1, dst[3]->x2, i_dst->x3, dst_tmp[3]->x4, i_dst_tmp->x5, width->x6, height->x7, coeff->x8
 function com_if_filter_hor_8_arm64
     ldr x8, [sp]    //coeff[3]
-    ldr w9, [sp, #8]
+    ldr w10, [sp, #8]
 
     sub sp, sp, #16
     stp x19, x20, [sp]
@@ -1076,12 +1076,9 @@ function com_if_filter_hor_8_arm64
     stp x21, x22, [sp]
     sub sp, sp, #16
     stp x23, x24, [sp]
-    sub sp, sp, #16
-    stp x25, x26, [sp]
     sub sp, sp, #64
     st1 {v8.8h - v11.8h}, [sp]
 
-    mov w25, w9     //bit_depth
     ld1 {v0.d}[0], [x8], #8
     abs v0.8b, v0.8b
     uxtl v31.8h, v0.8b
@@ -1103,10 +1100,11 @@ function com_if_filter_hor_8_arm64
     lsl x5, x5, #1      //i_dst_tmp
 
     mov x9, #1
-    lsl x9, x9, x25
+    lsl x9, x9, x10
     sub x9, x9, #1
     dup v31.8h, w9      //max_val
-    
+    mov w8, w10         //bit_depth
+
     mov x9, #0
     dup v16.8h, w9      //0
         
@@ -1156,7 +1154,7 @@ com_if_filter_hor_8_x:
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
 
-    cmp w25, #10
+    cmp w8, #10
     bne filter_hor_8_shift8_d0
     //(t1 + 2) >> 2
     sqrshrn  v29.4h, v17.4s, #2
@@ -1194,7 +1192,7 @@ filter_hor_8_shift8_end_d0:
     umlsl  v17.4s, v28.4h, v0.4h
     umlsl2 v18.4s, v28.8h, v0.8h
 
-    cmp w25, #10
+    cmp w8, #10
     bne filter_hor_8_shift8_d1
     //(t1 + 2) >> 2
     sqrshrn  v29.4h, v17.4s, #2
@@ -1231,7 +1229,7 @@ filter_hor_8_shift8_end_d1:
     smlsl  v17.4s, v28.4h, v0.4h
     smlsl2 v18.4s, v28.8h, v0.8h
 
-    cmp w25, #10
+    cmp w8, #10
     bne filter_hor_8_shift8_d2
     //(t1 + 2) >> 2
     sqrshrn  v29.4h, v17.4s, #2
@@ -1264,7 +1262,6 @@ filter_hor_8_shift8_end_d2:
     bgt com_if_filter_hor_8_y
 
     ld1 {v8.8h - v11.8h}, [sp], #64
-    ldp x25, x26, [sp], #16
     ldp x23, x24, [sp], #16
     ldp x21, x22, [sp], #16
     ldp x19, x20, [sp], #16
